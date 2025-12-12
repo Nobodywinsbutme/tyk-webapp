@@ -101,6 +101,11 @@ async function submitLogin() {
     const username = document.getElementById('loginUsername').value;
     const password = document.getElementById('loginPassword').value;
     const isRemember = document.getElementById('rememberMe').checked;
+    // cookies sẽ được set trong response từ server
+    let url = '/api/auth/login';
+    if (isRemember) {
+        url += '?remember-me=true';
+    }
 
     try {
         const response = await fetch('/api/auth/login', {

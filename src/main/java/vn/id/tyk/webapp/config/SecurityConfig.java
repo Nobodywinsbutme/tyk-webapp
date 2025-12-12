@@ -31,7 +31,19 @@ public class SecurityConfig {
                 "/css/**", "/js/**", "/img/**"
             ).permitAll()
                 .anyRequest().authenticated() // Các link khác phải đăng nhập
+            )
+            // Cấu hình Login (Giữ nguyên hoặc chỉnh sửa tùy code cũ)
+            .formLogin(form -> form
+                .loginPage("/login") 
+                .permitAll()
+            )
+            // --- THÊM ĐOẠN NÀY ---
+            .rememberMe(remember -> remember
+                .key("khongchodaudungcohoi") // Key để mã hóa cookie
+                .tokenValiditySeconds(7 * 24 * 60 * 60) // Cookie sống 7 ngày
+                .rememberMeParameter("remember-me") // Tên của ô checkbox ở HTML
             );
+            // ---------------------
         return http.build();
     }
 }
