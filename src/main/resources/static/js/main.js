@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 function checkLoginState() {
-    const savedUser = localStorage.getItem("tyk_user");
+    const savedUser = localStorage.getItem("tyk_user") || sessionStorage.getItem("tyk_user");
     if (savedUser) {
         const user = JSON.parse(savedUser);
         
@@ -50,11 +50,12 @@ async function fetchRealCoin(username) {
                 coinBadge.classList.remove('d-none');
             }
         }
-    } catch (e) { console.error("Lỗi coin:", e); }
+    } catch (e) { console.error("Error coin:", e); }
 }
 
 function logout() {
     localStorage.removeItem("tyk_user");
+    sessionStorage.removeItem("tyk_user");
     window.location.href = "/";
 }
 
