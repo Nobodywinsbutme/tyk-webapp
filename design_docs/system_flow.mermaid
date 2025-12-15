@@ -1,0 +1,115 @@
+graph TD
+    %% --- ĐỊNH NGHĨA STYLE ---
+    classDef actor fill:#f9f,stroke:#333,stroke-width:2px,color:black;
+    classDef db fill:#ff9,stroke:#e6b800,stroke-width:2px,color:black;
+    classDef page fill:#d4edda,stroke:#28a745,stroke-width:1px,color:black;
+    classDef process fill:#cce5ff,stroke:#007bff,stroke-width:1px,color:black;
+    classDef decision fill:#fff3cd,stroke:#ffc107,stroke-width:1px,color:black;
+    classDef adminaction fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:black;
+    classDef restricted fill:#ffcccc,stroke:#dc3545,stroke-width:2px,color:black,stroke-dasharray: 5 5;
+
+    %% --- ACTORS & DB ---
+    Guest((Khách - Chưa Login)):::actor
+    User((Người dùng - Đã Login)):::actor
+    Admin((Quản trị viên)):::actor
+    DB[(MySQL Database\nAiven Cloud)]:::db
+
+    %% --- 1. KHU VỰC CÔNG CỘNG (AI CŨNG THẤY) ---
+    Guest -->|Truy cập Web| HomePage[Trang chủ / Home]:::page
+    
+    subgraph Public Zone [Khu vực Công cộng]
+        HomePage --> NewsPage[Trang Tin tức / News]:::page
+        HomePage --> GuidePage[Trang Hướng dẫn / Guide]:::page
+        HomePage --> GameStatusPublic[Game Status - Xem thiết kế]:::page
+        
+        %% CHỢ LÀ CÔNG CỘNG (Xem & Tìm kiếm)
+        HomePage --> MarketplacePage[Chợ / MarketplaceTYK]:::page
+        MarketplacePage -->|Load danh sách| GetListingsAPI[API Lấy MarketListings]:::process
+        GetListingsAPI -- Read --> DB
+        
+        MarketplacePage --> SearchFunc[🔍 Tìm kiếm Đồ & Người]:::process
+        SearchFunc -- Query --> DB
+    end
+
+    %% --- 2. HỆ THỐNG XÁC THỰC (GATEKEEPER) ---
+    subgraph Auth System [Hệ thống Xác thực]
+        HomePage -->|Click Login/Signup| AuthModals[Modal Đăng nhập/Đăng ký]:::process
+        AuthModals -->|Submit Form| AuthAPI{API Kiểm tra}:::decision
+        AuthAPI -->|Thất bại| ShowError[Hiện lỗi UI]:::process
+        AuthAPI -->|Thành công| LoginSuccess[Lưu Session/Token]:::process
+        LoginSuccess -->|Chuyển vai trò| User
+    end
+    AuthAPI -- CRUD User/Check Ban --> DB
+
+    %% --- 3. HÀNH ĐỘNG HẠN CHẾ (CẦN LOGIN) ---
+    %% Logic: Từ Chợ bấm nút -> Check Login -> Nếu OK mới cho làm tiếp
+    subgraph Restricted Actions [Hành động cần Đăng nhập]
+        direction TB
+        %% Các nút bấm trên Chợ
+        MarketplacePage --> BtnBuy[Nút Mua / Bid]:::restricted
+        MarketplacePage --> BtnChat[Nút Nhắn tin]:::restricted
+        MarketplacePage --> BtnReport[Nút Tố cáo]:::restricted
+
+        %% Cổng kiểm soát
+        BtnBuy & BtnChat & BtnReport --> CheckLogin{Đã Login?}:::decision
+        
+        %% Chưa Login -> Đá về Modal
+        CheckLogin -- No --> AuthModals
+        
+        %% Đã Login -> Thực hiện API
+        CheckLogin -- Yes --> ExecuteAction[Thực hiện hành động]:::process
+    end
+
+    %% --- 4. KHU VỰC NGƯỜI DÙNG (USER ZONE) ---
+    User -->|Xem lại| HomePage
+    User -->|Truy cập| InventoryPage[Kho đồ cá nhân]:::page
+    User -->|Truy cập| UserProfilePage[Hồ sơ cá nhân]:::page
+    User -->|Click Logout| LogoutAPI[API Đăng xuất]:::process --> Guest
+
+    subgraph User Features [Chức năng Người dùng]
+        %% Bán hàng (Từ kho)
+        InventoryPage -->|Load đồ| GetInventoryAPI[API Lấy Inventory]:::process
+        GetInventoryAPI -- Read --> DB
+        InventoryPage -->|Chọn đồ -> Bán| SellAPI[API Đăng bán]:::process
+        SellAPI -- Create Listing --> DB
+
+        %% Mua hàng (Từ cổng ExecuteAction xuống)
+        ExecuteAction -->|Xử lý Mua| BuyTransaction[Giao dịch: Trừ tiền + Chuyển đồ]:::process
+        BuyTransaction -- Update DB --> DB
+
+        %% Chat & Report (Từ cổng ExecuteAction xuống)
+        ExecuteAction -->|Xử lý Chat| SaveChat[Lưu ChatMessage]:::process
+        SaveChat --> DB
+        ExecuteAction -->|Xử lý Report| SaveReport[Lưu UserReport]:::process
+        SaveReport --> DB
+
+        %% Game Status Upload
+        UserProfilePage -->|Upload Map/Skin| UploadDesignAPI[API Đăng thiết kế]:::process
+        UploadDesignAPI -- Save Design (PENDING) --> DB
+        
+        %% Xem lịch sử chat
+        UserProfilePage -->|Xem tin nhắn| GetChatHistory[API Lấy lịch sử Chat]:::process
+        GetChatHistory -- Read --> DB
+    end
+
+    %% --- 5. KHU VỰC ADMIN ---
+    subgraph Admin Dashboard [Trang quản trị Admin]
+        Admin -->|Login Admin| AdminPage[Giao diện Admin]:::adminaction
+
+        %% Quản lý Item
+        AdminPage -->|Tạo vật phẩm mẫu| CreateItemAPI[API Tạo ItemDefinition]:::adminaction
+        CreateItemAPI -- Insert --> DB
+
+        %% Duyệt thiết kế
+        AdminPage -->|Xem bài chờ duyệt| ReviewDesignAPI{Duyệt thiết kế?}:::decision
+        ReviewDesignAPI -->|Approve/Reject| UpdateDesignDB[Update Status]:::adminaction
+        UpdateDesignDB -- Update --> DB
+
+        %% Xử lý Ban
+        AdminPage -->|Xem tố cáo| ReviewReportAPI{Xử lý Report?}:::decision
+        ReviewReportAPI -->|Ban User| BanUserAPI[API Ban User]:::adminaction
+        BanUserAPI -- Update isBanned --> DB
+    end
+
+    %% --- LIÊN KẾT DỮ LIỆU ---
+    GameStatusPublic -.->|Chỉ hiện bài APPROVED| DB

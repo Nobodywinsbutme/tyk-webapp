@@ -26,4 +26,10 @@ public class User {
     
     // Role: USER hoặc ADMIN (để sau này phân quyền)
     private String role = "USER"; 
+
+    @Column(columnDefinition = "boolean default false")
+    private boolean isBanned = false; // Mặc định là không bị ban
+
+    // Lý do bị ban (Admin ghi chú)
+    private String banReason;
 }

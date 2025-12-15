@@ -1,0 +1,258 @@
+// 1. Cấu hình kết nối
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL") // Link kết nối DB (Giống trong application.properties)
+}
+
+// ==========================================
+// 2. USER & AUTH (Người dùng & Phân quyền)
+// ==========================================
+
+model User {
+  id          Int      @id @default(autoincrement())
+  username    String   @unique
+  email       String   @unique
+  password    String
+  coinBalance BigInt   @default(0) @map("coin_balance") // Số dư coin
+  role        Role     @default(USER)
+  
+  // Tính năng Ban (Khóa tài khoản)
+  isBanned    Boolean  @default(false) @map("is_banned")
+  banReason   String?  @map("ban_reason") @db.Text
+
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // --- CÁC MỐI QUAN HỆ ---
+  
+  // Kho đồ
+  inventoryItems InventoryItem[]
+
+  // Chợ (Marketplace)
+  listings       MarketListing[]
+  bids           Bid[]
+  transactions   Transaction[]   @relation("Buyer")
+
+  // Chat (Gửi và Nhận)
+  sentMessages     ChatMessage[] @relation("Sender")
+  receivedMessages ChatMessage[] @relation("Receiver")
+
+  // Game Status (Design Upload)
+  designsCreated   DesignSubmission[] @relation("Creator")
+  designsApproved  DesignSubmission[] @relation("Approver")
+
+  // Report (Người tố cáo & Người bị tố cáo)
+  reportsMade      UserReport[] @relation("Reporter")
+  reportsReceived  UserReport[] @relation("ReportedUser")
+
+  @@map("users") // Tên bảng trong MySQL
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+// ==========================================
+// 3. ITEMS & INVENTORY (Vật phẩm & Kho)
+// ==========================================
+
+// Sách mẫu vật phẩm (Admin tạo ra)
+model ItemDefinition {
+  id            Int         @id @default(autoincrement())
+  name          String
+  description   String?     @db.Text
+  imageUrl      String?     @map("image_url")
+  
+  itemClass     ItemClass   @map("item_class") // Chiến binh, Phù thủy...
+  levelRequired Int         @map("level_required")
+  attack        Int         @default(0)
+  
+  // Thuộc tính mở rộng (Lưu dạng JSON: { "crit": 10, "element": "Fire" })
+  attributes    Json?       
+
+  inventoryItems InventoryItem[]
+
+  @@map("item_definitions")
+}
+
+// Vật phẩm trong kho người dùng
+model InventoryItem {
+  id               Int            @id @default(autoincrement())
+  
+  user             User           @relation(fields: [userId], references: [id])
+  userId           Int            @map("user_id")
+
+  itemDefinition   ItemDefinition @relation(fields: [itemDefinitionId], references: [id])
+  itemDefinitionId Int            @map("item_definition_id")
+
+  isEquipped       Boolean        @default(false) @map("is_equipped") // Đang mặc hay không
+  obtainedAt       DateTime       @default(now()) @map("obtained_at")
+
+  // Nếu item này đang được treo bán, thì nó sẽ nằm trong listing này
+  activeListing    MarketListing?
+
+  @@map("inventory_items")
+}
+
+enum ItemClass {
+  WARRIOR
+  ARCHER
+  MAGE
+  COMMON
+}
+
+// ==========================================
+// 4. MARKETPLACE (Chợ mua bán)
+// ==========================================
+
+model MarketListing {
+  id              Int           @id @default(autoincrement())
+  
+  seller          User          @relation(fields: [sellerId], references: [id])
+  sellerId        Int           @map("seller_id")
+
+  // Món đồ đang bán (1 Listing bán 1 Item cụ thể trong kho)
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  inventoryItemId Int           @unique @map("inventory_item_id")
+
+  price           BigInt        // Giá bán (Mua đứt)
+  
+  // Đấu giá (Optional - Nếu muốn làm sau)
+  isAuction       Boolean       @default(false) @map("is_auction")
+  currentBid      BigInt?       @map("current_bid")
+  auctionEndTime  DateTime?     @map("auction_end_time")
+
+  status          ListingStatus @default(ACTIVE)
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  bids            Bid[]
+
+  @@map("market_listings")
+}
+
+model Bid {
+  id        Int           @id @default(autoincrement())
+  
+  listing   MarketListing @relation(fields: [listingId], references: [id])
+  listingId Int           @map("listing_id")
+
+  bidder    User          @relation(fields: [bidderId], references: [id])
+  bidderId  Int           @map("bidder_id")
+
+  amount    BigInt
+  placedAt  DateTime      @default(now()) @map("placed_at")
+
+  @@map("bids")
+}
+
+// Lưu lịch sử giao dịch
+model Transaction {
+  id          Int      @id @default(autoincrement())
+  
+  buyer       User     @relation("Buyer", fields: [buyerId], references: [id])
+  buyerId     Int      @map("buyer_id")
+  
+  sellerId    Int      @map("seller_id") // Lưu ID cứng để tracking, dù user bị xóa
+  itemId      Int      @map("item_id")   // ID Item definition
+  
+  price       BigInt
+  transactedAt DateTime @default(now()) @map("transacted_at")
+
+  @@map("transactions")
+}
+
+enum ListingStatus {
+  ACTIVE    // Đang bán
+  SOLD      // Đã bán
+  CANCELLED // Đã hủy
+}
+
+// ==========================================
+// 5. CHAT SYSTEM (Tin nhắn)
+// ==========================================
+
+model ChatMessage {
+  id         Int      @id @default(autoincrement())
+  
+  sender     User     @relation("Sender", fields: [senderId], references: [id])
+  senderId   Int      @map("sender_id")
+
+  receiver   User     @relation("Receiver", fields: [receiverId], references: [id])
+  receiverId Int      @map("receiver_id")
+
+  content    String   @db.Text
+  sentAt     DateTime @default(now()) @map("sent_at")
+  isRead     Boolean  @default(false) @map("is_read")
+
+  @@map("chat_messages")
+}
+
+// ==========================================
+// 6. GAME STATUS (User Design Submission)
+// ==========================================
+
+model DesignSubmission {
+  id          Int              @id @default(autoincrement())
+  title       String
+  description String?          @db.Text
+  imageUrl    String?          @map("image_url")
+  fileUrl     String?          @map("file_url") // Link tải map/skin
+
+  category    DesignCategory
+  status      SubmissionStatus @default(PENDING)
+
+  creator     User             @relation("Creator", fields: [creatorId], references: [id])
+  creatorId   Int              @map("creator_id")
+
+  // Admin duyệt bài
+  approvedBy  User?            @relation("Approver", fields: [approverId], references: [id])
+  approverId  Int?             @map("approver_id")
+
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  @@map("design_submissions")
+}
+
+enum DesignCategory {
+  MAP
+  SKIN
+  WEAPON
+}
+
+enum SubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ==========================================
+// 7. REPORT SYSTEM (Tố cáo & Ban)
+// ==========================================
+
+model UserReport {
+  id             Int          @id @default(autoincrement())
+  
+  reporter       User         @relation("Reporter", fields: [reporterId], references: [id])
+  reporterId     Int          @map("reporter_id")
+
+  reportedUser   User         @relation("ReportedUser", fields: [reportedUserId], references: [id])
+  reportedUserId Int          @map("reported_user_id")
+
+  reason         String       @db.Text
+  status         ReportStatus @default(PENDING)
+  adminNote      String?      @map("admin_note") @db.Text
+
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  @@map("user_reports")
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED // Đã xử lý (Ví dụ: Đã ban)
+  DISMISSED // Bác bỏ (Không đủ bằng chứng)
+}

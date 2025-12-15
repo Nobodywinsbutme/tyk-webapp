@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 function checkLoginState() {
-    const savedUser = localStorage.getItem("tyk_user");
+    const savedUser = localStorage.getItem("tyk_user") || sessionStorage.getItem("tyk_user");
     if (savedUser) {
         const user = JSON.parse(savedUser);
         
@@ -50,11 +50,12 @@ async function fetchRealCoin(username) {
                 coinBadge.classList.remove('d-none');
             }
         }
-    } catch (e) { console.error("Lỗi coin:", e); }
+    } catch (e) { console.error("Error coin:", e); }
 }
 
 function logout() {
     localStorage.removeItem("tyk_user");
+    sessionStorage.removeItem("tyk_user");
     window.location.href = "/";
 }
 
@@ -101,6 +102,11 @@ async function submitLogin() {
     const username = document.getElementById('loginUsername').value;
     const password = document.getElementById('loginPassword').value;
     const isRemember = document.getElementById('rememberMe').checked;
+    // cookies sẽ được set trong response từ server
+    let url = '/api/auth/login';
+    if (isRemember) {
+        url += '?remember-me=true';
+    }
 
     try {
         const response = await fetch('/api/auth/login', {
