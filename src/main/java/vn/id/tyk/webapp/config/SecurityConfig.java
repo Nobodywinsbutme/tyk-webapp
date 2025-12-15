@@ -34,7 +34,13 @@ public class SecurityConfig {
             )
             // Cấu hình Login (Giữ nguyên hoặc chỉnh sửa tùy code cũ)
             .formLogin(form -> form
-                .loginPage("/login") 
+                .loginPage("/") 
+                .permitAll()
+            )
+
+            .logout(logout -> logout
+                .logoutUrl("/api/auth/logout")
+                .logoutSuccessUrl("/")
                 .permitAll()
             )
             // --- THÊM ĐOẠN NÀY ---
