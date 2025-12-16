@@ -77,9 +77,13 @@ async function submitRegister() {
     const username = document.getElementById('regUsername').value;
     const email = document.getElementById('regEmail').value;
     const password = document.getElementById('regPassword').value;
+    const confirmPassword = document.getElementById('regConfirmPassword').value;
 
     if(username.length < 3) return alert("Username too short!");
     if(password.length < 6) return alert("Password must have at least 6 digits!");
+    if(password !== confirmPassword) {
+        return alert("❌ Confirm password does not match!");
+    }
 
     try {
         const response = await fetch('/api/auth/register', {
