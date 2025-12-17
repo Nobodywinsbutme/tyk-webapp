@@ -2,15 +2,18 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>TYK - Gamestatus</title>
+    <title>TYK - Community</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="icon" type="image/png" th:href="@{/img/logo.png}">
-
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <style>
-        body { background-color: #121212; color: #ffffff; }
+        body { background-color: #121212; color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; }
         .nav-link:hover { color: #ffc107 !important; }
-        .placeholder-content { height: 60vh; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        footer { margin-top: auto; }
+        /* Hiệu ứng hover cho card */
+        .card { transition: all 0.3s ease; }
+        .card:hover { transform: translateY(-5px); border-color: #ffc107 !important; }
     </style>
 </head>
 <body>
@@ -23,26 +26,20 @@
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
-        
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto ms-3">
                 <li class="nav-item"><a class="nav-link" th:href="@{/}">Home</a></li>
                 <li class="nav-item"><a class="nav-link" th:href="@{/news}">News</a></li>
                 <li class="nav-item"><a class="nav-link" th:href="@{/guide}">Guide</a></li>
-                <li class="nav-item"><a class="nav-link active" th:href="@{/status}">Gamestatus</a></li>
+                <li class="nav-item"><a class="nav-link active" th:href="@{/community}">Community</a></li>
                 <li class="nav-item"><a class="nav-link" th:href="@{/marketplace}">MarketplaceTYK</a></li>
             </ul>
-            
             <div class="d-flex" id="authButtons">
                 <button class="btn btn-outline-light me-2" data-bs-toggle="modal" data-bs-target="#loginModal">Login</button>
                 <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#registerModal">Sign Up</button>
             </div>
-
             <div class="d-flex d-none align-items-center" id="userProfile">
-                <span id="coinBadge" class="badge bg-warning text-dark me-3 d-none">
-                    Coin: <span id="displayCoin">0</span>
-                </span>
-                
+                <span id="coinBadge" class="badge bg-warning text-dark me-3 d-none">Coin: <span id="displayCoin">0</span></span>
                 <span class="text-white me-3">Hello, <b class="text-warning" id="displayUsername">User</b></span>
                 <button class="btn btn-sm btn-outline-danger" onclick="logout()">Logout</button>
             </div>
@@ -50,21 +47,34 @@
     </div>
 </nav>
 
-<div class="container placeholder-content">
-    <h1 class="text-secondary display-1 fw-bold">COMING SOON</h1>
-    <a th:href="@{/}" class="btn btn-outline-light mt-3">Home</a>
+<div class="container py-4">
+    <div class="row align-items-center mb-4">
+        <div class="col-auto">
+            <button class="btn btn-sm btn-success px-3 py-2" onclick="checkLoginAndOpenUpload()">
+                <i class="bi bi-plus-lg"></i> Tạo Bài Mới
+            </button>
+        </div>
+    </div>
+
+    <div class="row g-4" id="communityList" style="min-height: 300px;">
+        <div class="col-12 text-center pt-5">
+            <div class="spinner-border text-warning" role="status" style="width: 3rem; height: 3rem;"></div>
+            <p class="text-secondary mt-3">Đang tải dữ liệu...</p>
+        </div>
+    </div>
 </div>
 
 <div th:replace="~{fragments/modals :: registerModal}"></div>
 <div th:replace="~{fragments/modals :: loginModal}"></div>
+<div th:replace="~{fragments/modals :: uploadModal}"></div>
 
-<footer class="bg-dark text-center text-white py-3 border-top border-secondary fixed-bottom">
-    <div class="container">
-        <small>&copy; 2025 TYK. All rights reserved.</small>
-    </div>
+<footer class="bg-dark text-center text-white py-3 border-top border-secondary">
+    <div class="container"><small>&copy; 2025 TYK. All rights reserved.</small></div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script th:src="@{/js/main.js}"></script> 
+<script th:src="@{/js/main.js}"></script>
+<script>document.addEventListener("DOMContentLoaded", loadCommunityDesigns);</script>
+
 </body>
 </html>

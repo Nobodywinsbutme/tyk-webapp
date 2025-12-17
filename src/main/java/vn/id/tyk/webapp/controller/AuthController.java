@@ -1,9 +1,18 @@
 package vn.id.tyk.webapp.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import vn.id.tyk.webapp.dto.LoginRequest;
@@ -14,66 +23,79 @@ import vn.id.tyk.webapp.repository.UserRepository;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/auth") // Đường dẫn gốc: localhost:8080/api/auth
+@RequestMapping("/api/auth")
 public class AuthController {
 
     @Autowired
     private UserRepository userRepository;
 
     @Autowired
-    private PasswordEncoder passwordEncoder; // Gọi công cụ mã hóa
+    private PasswordEncoder passwordEncoder;
 
-    @PostMapping("/register") // Đường dẫn con: /api/auth/register
+    // --- THÊM MỚI 1: Công cụ quản lý đăng nhập của Spring Security ---
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    // --- THÊM MỚI 2: Công cụ để lưu Session vào bộ nhớ Server ---
+    private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
+
+    @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest request, BindingResult result) {
-        
-        // 1. Check lỗi Validation (Email sai, pass ngắn...)
+        // 1. Check lỗi Validation
         if (result.hasErrors()) {
             return ResponseEntity.badRequest().body(result.getFieldError().getDefaultMessage());
         }
-        
+
         // 2. Kiểm tra trùng username
         if (userRepository.existsByUsername(request.getUsername())) {
-            return ResponseEntity.badRequest().body("Error: Username exit!");
+            return ResponseEntity.badRequest().body("Error: Username exist!");
         }
 
-        // 2. Tạo User mới
+        // 3. Tạo User mới
         User newUser = new User();
         newUser.setUsername(request.getUsername());
-        newUser.setPassword(request.getPassword()); // Lưu ý: Chưa mã hóa pass (làm sau)
         newUser.setEmail(request.getEmail());
-        newUser.setCoinBalance(0L); // Mới tạo thì tiền bằng 0
+        newUser.setCoinBalance(0L);
         newUser.setRole("USER");
 
-        // MÃ HÓA PASSWORD TRƯỚC KHI LƯU
+        // Mã hóa password
         newUser.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        // 3. Lưu xuống Database
+        // Lưu xuống Database
         userRepository.save(newUser);
 
-        return ResponseEntity.ok("Regist sucessful! Welcome " + request.getUsername());
+        return ResponseEntity.ok("Register successful! Welcome " + request.getUsername());
     }
 
+    // --- HÀM LOGIN ĐÃ ĐƯỢC VIẾT LẠI CHUẨN SECURITY ---
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestBody LoginRequest request) {
-        // 1. Tìm user trong DB
-        Optional<User> userOp = userRepository.findByUsername(request.getUsername());
+    public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) {
+        try {
+            // 1. Dùng AuthenticationManager để kiểm tra user/pass
+            // (Thay vì dùng passwordEncoder.matches thủ công như trước)
+            Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
+            );
 
-        // 2. Nếu không thấy user
-        if (userOp.isEmpty()) {
-            return ResponseEntity.badRequest().body("Error: Username does not exit!");
+            // 2. Tạo một Context mới chứa thông tin người vừa đăng nhập thành công
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+
+            // 3. --- QUAN TRỌNG NHẤT: LƯU CONTEXT VÀO SESSION ---
+            // Dòng này giúp Server "nhớ" người dùng. Không có dòng này là đăng nhập xong bị quên ngay.
+            securityContextRepository.saveContext(context, request, response);
+
+            // 4. Lấy thông tin User trả về cho Frontend (để lưu localStorage)
+            User user = userRepository.findByUsername(loginRequest.getUsername()).orElseThrow();
+            return ResponseEntity.ok(user);
+
+        } catch (Exception e) {
+            // Nếu sai mật khẩu hoặc user không tồn tại, AuthenticationManager sẽ ném lỗi
+            return ResponseEntity.badRequest().body("Sai tên đăng nhập hoặc mật khẩu!");
         }
-
-        User user = userOp.get();
-
-        // 3. Kiểm tra password (Lưu ý: Đang so sánh thô, sau này sẽ dùng BCrypt)
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            return ResponseEntity.badRequest().body("Error: wrong password!");
-        }
-
-        // 4. Thành công -> Trả về thông tin user (để Frontend lưu lại)
-        return ResponseEntity.ok(user);
     }
-    
+
     // API lấy thông tin user mới nhất (để update coin)
     @GetMapping("/profile/{username}")
     public ResponseEntity<?> getUserProfile(@PathVariable String username) {

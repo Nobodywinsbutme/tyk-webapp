@@ -29,8 +29,13 @@ public class HomeController {
         return "guide"; // Trả về guide.html
     }
 
-    @GetMapping("/status")
-    public String gameStatus() {
-        return "gamestatus"; // Trả về gamestatus.html
+    @GetMapping("/community")
+    public String community() {
+        return "community"; // Trả về gamestatus.html
+    }
+
+    @GetMapping("/my-designs")
+    public String myDesigns() {
+        return "my-designs"; // Trả về my-designs.html
     }
 }

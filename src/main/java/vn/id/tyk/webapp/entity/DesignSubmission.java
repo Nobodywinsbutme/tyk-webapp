@@ -1,10 +1,14 @@
 package vn.id.tyk.webapp.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import java.time.LocalDateTime;
 
-@Data
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@Getter
+@Setter // Dùng Getter/Setter thay vì @Data cho Entity để an toàn hơn
 @Entity
 @Table(name = "design_submissions")
 public class DesignSubmission {
@@ -13,33 +17,41 @@ public class DesignSubmission {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String title; // Tên bản thiết kế
+    @Column(nullable = false)
+    private String title; 
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    private String imageUrl; // Ảnh demo
-    private String fileUrl;  // Link tải file thiết kế (Map/Skin...)
+    @Column(length = 500)
+    private String imageUrl; 
 
-    // Phân loại: MAP, SKIN, WEAPON
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private DesignCategory category;
 
-    // Trạng thái duyệt: PENDING, APPROVED, REJECTED
     @Enumerated(EnumType.STRING)
     private SubmissionStatus status = SubmissionStatus.PENDING;
 
-    // Người tạo
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creator_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password", "designs", "role"})
     private User creator;
 
-    private LocalDateTime createdAt = LocalDateTime.now();
+    // Không gán new Date() ở đây
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
     
-    // Admin nào duyệt (để tracking)
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "approver_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password", "designs"})
     private User approvedBy;
+
+    // Tự động gán ngày giờ ngay trước khi lưu vào DB
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
 
     // --- ENUM ---
     public enum DesignCategory {
