@@ -14,4 +14,6 @@ public interface DesignRepository extends JpaRepository<DesignSubmission, Long> 
     
     // Tìm bài viết theo ID và User (để đảm bảo chỉ chủ bài viết mới được sửa/xóa)
     Optional<DesignSubmission> findByIdAndCreator(Long id, User creator);
+
+    List<DesignSubmission> findByStatus(DesignSubmission.SubmissionStatus status);
 }

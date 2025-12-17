@@ -57,10 +57,19 @@ public class SecurityConfig {
                     "/css/**", "/js/**", "/img/**"
                 ).permitAll()
                 
+                .requestMatchers(
+                    "/admin", 
+                    "/api/designs/pending", 
+                    "/api/designs/*/status"
+                ).hasRole("ADMIN")
+
                 // 2. CÁC API CẦN BẢO MẬT (Dữ liệu nhạy cảm)
                 // Các API bắt đầu bằng /api/designs/ (trừ cái public ở trên) đều bắt buộc đăng nhập
                 // Bao gồm: /api/designs/my-designs, /api/designs/upload, DELETE, PUT...
-                .requestMatchers("/api/designs/**").authenticated()
+                .requestMatchers(
+                    "/api/designs/**",
+                    "/admin"
+                ).authenticated()
                 
                 // 3. CÁC LINK KHÁC
                 .anyRequest().authenticated()

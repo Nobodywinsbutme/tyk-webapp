@@ -21,6 +21,17 @@ function checkLoginState() {
         
         if (userProfile) {
             userProfile.classList.remove('d-none');
+
+            let menuItems = '';
+            if (user.role === 'ADMIN') {
+                menuItems = `<li><a class="dropdown-item text-warning fw-bold" href="/admin"><i class="bi bi-shield-lock me-2"></i> Admin Panel</a></li>
+                             <li><hr class="dropdown-divider bg-secondary"></li>`;
+            }
+            else {
+                menuItems = `<li><a class="dropdown-item text-white" href="/my-designs"><i class="bi bi-images me-2"></i> My Designs</a></li>
+                             <li><hr class="dropdown-divider bg-secondary"></li>`;
+            }
+
             userProfile.innerHTML = `
                 <div class="dropdown user-dropdown">
                     <a class="nav-link dropdown-toggle text-white d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
@@ -28,9 +39,7 @@ function checkLoginState() {
                         <span>Hello, <b class="text-warning">${user.username}</b></span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end shadow bg-dark border-secondary">
-                        <li><a class="dropdown-item text-white" href="/my-designs"><i class="bi bi-images me-2"></i> My Designs</a></li>
-                        <li><hr class="dropdown-divider bg-secondary"></li>
-                        <li><button class="dropdown-item text-danger" onclick="logout()"><i class="bi bi-box-arrow-right me-2"></i> Logout</button></li>
+                        ${menuItems}  <li><button class="dropdown-item text-danger" onclick="logout()"><i class="bi bi-box-arrow-right me-2"></i> Logout</button></li>
                     </ul>
                 </div>
             `;
@@ -48,7 +57,8 @@ function checkLoginState() {
             btnUser.classList.remove('d-none');
         }
 
-    } else {
+    } 
+    else {
         // --- TRẠNG THÁI CHƯA ĐĂNG NHẬP ---
         if (authButtons) authButtons.classList.remove('d-none');
         if (userProfile) userProfile.classList.add('d-none');
@@ -240,7 +250,7 @@ async function deleteDesign(id) {
         });
         if (response.ok) {
             alert("🗑️ Đã xóa bài viết!");
-            loadMyManagementDesigns(); 
+            location.reload();
         } else {
             alert("Không thể xóa bài viết này.");
         }
@@ -254,6 +264,7 @@ async function deleteDesign(id) {
 // 4.1. Trang COMMUNITY
 async function loadCommunityDesigns() {
     const listDiv = document.getElementById('communityList');
+    
     if (!listDiv) return;
 
     try {
@@ -275,12 +286,27 @@ async function loadCommunityDesigns() {
             return;
         }
 
-        let html = '';
+        const savedUser = localStorage.getItem("tyk_user") || sessionStorage.getItem("tyk_user");
+    const currentUser = savedUser ? JSON.parse(savedUser) : null;
+    const isAdmin = currentUser && currentUser.role === 'ADMIN';
+    
+    let html = '';
         designs.forEach(d => {
+            let adminAction = '';
+            if (isAdmin) {
+                adminAction = `
+                    <button class="btn btn-sm btn-danger position-absolute top-0 start-0 m-2" 
+                            onclick="deleteDesign(${d.id})" title="Admin xóa bài">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                `;
+            }
+
             html += `
             <div class="col-md-3 col-sm-6 mb-4">
-                <div class="card h-100 bg-dark border-secondary text-white shadow-sm hover-effect">
-                    <div style="height: 200px; overflow: hidden;">
+                <div class="card h-100 bg-dark border-secondary text-white shadow-sm hover-effect position-relative">
+                    
+                    ${adminAction} <div style="height: 200px; overflow: hidden;">
                         <img src="${d.imageUrl}" class="w-100 h-100" style="object-fit: cover;" onerror="this.src='/img/logo.png'">
                     </div>
                     <div class="card-body">
@@ -384,5 +410,72 @@ async function loadMyManagementDesigns() {
     } catch (e) { 
         console.error(e);
         listDiv.innerHTML = `<div class="col-12 text-center text-danger py-5">Lỗi: ${e.message}</div>`;
+    }
+}
+// ==========================================
+// 5. ADMIN DASHBOARD LOGIC (MỚI THÊM)
+// ==========================================
+
+async function loadPendingDesigns() {
+    const tableBody = document.getElementById('pendingList');
+    if (!tableBody) return; 
+
+    try {
+        const response = await fetch('/api/designs/pending', {
+            method: 'GET',
+            credentials: 'include'
+        });
+
+        // Nếu API lỗi (403, 500...)
+        if (!response.ok) {
+            throw new Error("Lỗi tải dữ liệu: " + response.status);
+        }
+
+        const designs = await response.json();
+
+        // --- FIX LỖI SPINNER QUAY MÃI TẠI ĐÂY ---
+        // Nếu danh sách rỗng -> Ghi đè câu thông báo lên Spinner
+        if (!designs || designs.length === 0) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-5">
+                        <i class="bi bi-clipboard-check display-4 opacity-25"></i>
+                        <p class="mt-3">Hiện không có bài nào cần duyệt.</p>
+                    </td>
+                </tr>`;
+            return;
+        }
+        // ----------------------------------------
+
+        let html = '';
+        designs.forEach(d => {
+            html += `
+            <tr>
+                <td class="ps-4">
+                    <img src="${d.imageUrl}" class="rounded border border-secondary" style="width: 60px; height: 60px; object-fit: cover;" onerror="this.src='/img/logo.png'">
+                </td>
+                <td>
+                    <div class="fw-bold text-warning">${d.title}</div>
+                    <div class="small text-secondary text-truncate" style="max-width: 250px;">${d.description || 'Không có mô tả'}</div>
+                </td>
+                <td><span class="badge bg-dark border border-secondary text-info">${d.category}</span></td>
+                <td>${d.creator ? d.creator.username : 'Unknown'}</td>
+                <td class="text-end pe-4">
+                    <button class="btn btn-sm btn-success me-2" onclick="updateDesignStatus(${d.id}, 'APPROVED')">
+                        <i class="bi bi-check-lg"></i> Duyệt
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="updateDesignStatus(${d.id}, 'REJECTED')">
+                        <i class="bi bi-x-lg"></i> Từ chối
+                    </button>
+                </td>
+            </tr>
+            `;
+        });
+        tableBody.innerHTML = html;
+
+    } catch (e) {
+        console.error(e);
+        // Nếu lỗi xảy ra -> Cũng phải xóa Spinner đi và báo lỗi
+        tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">Không thể tải dữ liệu!<br><small>${e.message}</small></td></tr>`;
     }
 }

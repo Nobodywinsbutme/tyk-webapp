@@ -88,7 +88,12 @@ public class DesignController {
             design.setTitle(title);
             design.setDescription(description);
             design.setCreator(user);
-            design.setStatus(DesignSubmission.SubmissionStatus.PENDING);
+            if ("ADMIN".equals(user.getRole())) {
+                design.setStatus(DesignSubmission.SubmissionStatus.APPROVED);
+                design.setApprovedBy(user); 
+            } else {
+                design.setStatus(DesignSubmission.SubmissionStatus.PENDING);
+            }
 
             try {
                 design.setCategory(DesignSubmission.DesignCategory.valueOf(category.toUpperCase()));
@@ -130,6 +135,14 @@ public class DesignController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         
         Optional<DesignSubmission> designOpt = designRepository.findByIdAndCreator(id, user);
+        
+        if ("ADMIN".equals(user.getRole())) {
+            // Nếu là Admin: Tìm bài theo ID thôi (bài của ai cũng tìm được)
+            designOpt = designRepository.findById(id);
+        } else {
+            // Nếu là User thường: Phải tìm bài theo ID VÀ User (chính chủ mới tìm thấy)
+            designOpt = designRepository.findByIdAndCreator(id, user);
+        } 
         
         if (designOpt.isPresent()) {
             DesignSubmission design = designOpt.get();
@@ -196,5 +209,44 @@ public class DesignController {
     public ResponseEntity<?> getPublicDesigns() {
         List<DesignSubmission> list = designRepository.findByStatusOrderByCreatedAtDesc(DesignSubmission.SubmissionStatus.APPROVED);
         return ResponseEntity.ok(list);
+    }
+
+    // --- API CHO ADMIN (Thêm vào cuối class) ---
+
+    // 1. Lấy danh sách các bài đang chờ duyệt (PENDING)
+    @GetMapping("/pending")
+    public ResponseEntity<?> getPendingDesigns() {
+        return ResponseEntity.ok(designRepository.findByStatus(DesignSubmission.SubmissionStatus.PENDING));
+    }
+
+    // 2. Cập nhật trạng thái bài viết (Duyệt hoặc Từ chối)
+    @PutMapping("/{id}/status")
+    public ResponseEntity<?> updateDesignStatus(
+            @PathVariable Long id,
+            @RequestParam("status") String statusStr, // Nhận vào "APPROVED" hoặc "REJECTED"
+            @AuthenticationPrincipal User user // Lấy thông tin Admin đang thao tác
+    ) {
+        // Kiểm tra xem bài viết có tồn tại không
+        Optional<DesignSubmission> designOp = designRepository.findById(id);
+        if (designOp.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        DesignSubmission design = designOp.get();
+        
+        try {
+            // Chuyển chuỗi text sang Enum (APPROVED/REJECTED)
+            DesignSubmission.SubmissionStatus newStatus = DesignSubmission.SubmissionStatus.valueOf(statusStr.toUpperCase());
+            design.setStatus(newStatus);
+            
+            // Lưu lại người duyệt bài (là Admin đang đăng nhập)
+            design.setApprovedBy(user);
+            
+            designRepository.save(design);
+            return ResponseEntity.ok("Cập nhật trạng thái thành công!");
+            
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Trạng thái không hợp lệ!");
+        }
     }
 }
