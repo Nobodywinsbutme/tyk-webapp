@@ -10,99 +10,81 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+
 import vn.id.tyk.webapp.dto.LoginRequest;
 import vn.id.tyk.webapp.dto.RegisterRequest;
+import vn.id.tyk.webapp.dto.UserResponse;
 import vn.id.tyk.webapp.entity.User;
-import vn.id.tyk.webapp.repository.UserRepository;
-
-import java.util.Optional;
+import vn.id.tyk.webapp.service.AuthService;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    // --- THÊM MỚI 1: Công cụ quản lý đăng nhập của Spring Security ---
-    @Autowired
     private AuthenticationManager authenticationManager;
 
-    // --- THÊM MỚI 2: Công cụ để lưu Session vào bộ nhớ Server ---
+    @Autowired
+    private AuthService authService;
+
+    // Công cụ quản lý Session của Spring Security
     private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
 
+    // 1. Đăng ký (Gọi Service để tạo user)
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest request, BindingResult result) {
-        // 1. Check lỗi Validation
-        if (result.hasErrors()) {
-            return ResponseEntity.badRequest().body(result.getFieldError().getDefaultMessage());
+    public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest request) {
+        try {
+            User newUser = authService.register(request);
+            return ResponseEntity.ok("Registration successful! Welcome " + newUser.getUsername());
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-
-        // 2. Kiểm tra trùng username
-        if (userRepository.existsByUsername(request.getUsername())) {
-            return ResponseEntity.badRequest().body("Error: Username exist!");
-        }
-
-        // 3. Tạo User mới
-        User newUser = new User();
-        newUser.setUsername(request.getUsername());
-        newUser.setEmail(request.getEmail());
-        newUser.setCoinBalance(0L);
-        newUser.setRole("USER");
-
-        // Mã hóa password
-        newUser.setPassword(passwordEncoder.encode(request.getPassword()));
-
-        // Lưu xuống Database
-        userRepository.save(newUser);
-
-        return ResponseEntity.ok("Register successful! Welcome " + request.getUsername());
     }
 
-    // --- HÀM LOGIN ĐÃ ĐƯỢC VIẾT LẠI CHUẨN SECURITY ---
+    // 2. Đăng nhập (Vẫn giữ ở Controller vì liên quan trực tiếp đến HTTP Session)
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest, 
+                                       HttpServletRequest request, 
+                                       HttpServletResponse response) {
         try {
-            // 1. Dùng AuthenticationManager để kiểm tra user/pass
-            // (Thay vì dùng passwordEncoder.matches thủ công như trước)
+            // Xác thực username/password
             Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
             );
 
-            // 2. Tạo một Context mới chứa thông tin người vừa đăng nhập thành công
+            // Tạo Security Context và lưu vào Session
             SecurityContext context = SecurityContextHolder.createEmptyContext();
             context.setAuthentication(authentication);
             SecurityContextHolder.setContext(context);
-
-            // 3. --- QUAN TRỌNG NHẤT: LƯU CONTEXT VÀO SESSION ---
-            // Dòng này giúp Server "nhớ" người dùng. Không có dòng này là đăng nhập xong bị quên ngay.
             securityContextRepository.saveContext(context, request, response);
 
-            // 4. Lấy thông tin User trả về cho Frontend (để lưu localStorage)
-            User user = userRepository.findByUsername(loginRequest.getUsername()).orElseThrow();
-            return ResponseEntity.ok(user);
+            // Lấy thông tin user từ Service để trả về (Dùng DTO UserResponse cho sạch)
+            User user = authService.getUserByUsername(loginRequest.getUsername());
+            
+            return ResponseEntity.ok(UserResponse.fromEntity(user));
 
         } catch (Exception e) {
-            // Nếu sai mật khẩu hoặc user không tồn tại, AuthenticationManager sẽ ném lỗi
-            return ResponseEntity.badRequest().body("Sai tên đăng nhập hoặc mật khẩu!");
+            return ResponseEntity.status(401).body("Invalid username or password!");
         }
     }
 
-    // API lấy thông tin user mới nhất (để update coin)
+    // 3. Lấy profile (Dùng cho FE cập nhật số dư coin)
     @GetMapping("/profile/{username}")
     public ResponseEntity<?> getUserProfile(@PathVariable String username) {
-        Optional<User> userOp = userRepository.findByUsername(username);
-        if (userOp.isPresent()) {
-            return ResponseEntity.ok(userOp.get());
+        try {
+            User user = authService.getUserByUsername(username);
+            return ResponseEntity.ok(UserResponse.fromEntity(user));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.notFound().build();
+    }
+    
+    // 4. Logout (Xử lý bởi Spring Security config, nhưng có thể thêm API dummy nếu cần)
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+        return ResponseEntity.ok("Logout successful");
     }
 }

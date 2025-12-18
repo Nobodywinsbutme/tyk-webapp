@@ -17,9 +17,9 @@ public class DatabaseKeeper {
         try {
             // Lệnh SELECT 1 là lệnh nhẹ nhất, chỉ để báo "Tao còn sống"
             jdbcTemplate.execute("SELECT 1"); 
-            System.out.println("💓 Heartbeat: Đã ping Database Aiven để không bị tắt!");
+            System.out.println("💓 Heartbeat: Aiven!");
         } catch (Exception e) {
-            System.out.println("⚠️ Lỗi ping Database: " + e.getMessage());
+            System.out.println("⚠️ Error ping Database: " + e.getMessage());
         }
     }
 }
