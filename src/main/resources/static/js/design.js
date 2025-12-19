@@ -1,6 +1,3 @@
-/* design.js - User Upload & Display Logic */
-
-// 1. UPLOAD & EDIT FORM LOGIC
 function checkLoginAndOpenUpload() {
     const user = localStorage.getItem("tyk_user") || sessionStorage.getItem("tyk_user");
     if (!user) {

@@ -1,4 +1,4 @@
-package vn.id.tyk.webapp.controller;
+package vn.id.tyk.webapp.controller.api;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;

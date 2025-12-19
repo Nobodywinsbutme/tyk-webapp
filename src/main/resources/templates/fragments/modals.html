@@ -79,7 +79,7 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header border-secondary">
-                    <h5 class="modal-title text-warning" id="modalTitleLabel">Gửi bản thiết kế</h5>
+                    <h5 class="modal-title text-warning" id="modalTitleLabel">Send Design</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -87,37 +87,37 @@
                         <input type="hidden" id="uploadId">
 
                         <div class="mb-3">
-                            <label class="form-label">Tiêu đề</label>
+                            <label class="form-label">Title</label>
                             <input type="text" class="form-control" id="uploadTitle" placeholder="Tên skin/map..." required>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Thể loại</label>
+                                <label class="form-label">Category</label>
                                 <select class="form-select" id="uploadCategory">
-                                    <option value="SKIN">Skin (Trang phục)</option>
-                                    <option value="MAP">Map (Bản đồ)</option>
-                                    <option value="WEAPON">Weapon (Vũ khí)</option>
+                                    <option value="SKIN">Skin</option>
+                                    <option value="MAP">Map</option>
+                                    <option value="WEAPON">Weapon</option>
                                 </select>
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Mô tả</label>
+                            <label class="form-label">Description</label>
                             <textarea class="form-control" id="uploadDesc" rows="3"></textarea>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Ảnh minh họa (Bắt buộc khi tạo mới)</label>
+                            <label class="form-label">Preview Image (Required when creating new)</label>
                             <input type="file" class="form-control" id="uploadImage" accept="image/*">
-                            <small class="text-muted">Chọn ảnh mới nếu muốn thay đổi.</small>
+                            <small class="text-muted">Choose a new image if you want to change it.</small>
                             <img id="previewImage" src="" class="mt-2 rounded border border-secondary" style="max-height: 150px; display: none;">
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer border-secondary">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="button" class="btn btn-warning" onclick="submitUpload()">Lưu Bài Viết</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning" onclick="submitUpload()">Save Post</button>
                 </div>
             </div>
         </div>

@@ -23,6 +23,7 @@ function checkLoginState() {
                              <li><hr class="dropdown-divider bg-secondary"></li>`;
             } else {
                 menuItems = `<li><a class="dropdown-item text-white" href="/my-designs"><i class="bi bi-images me-2"></i> My Designs</a></li>
+                             <li><a class="dropdown-item text-white" href="/settings"><i class="bi bi-gear me-2"></i> Settings</a></li>
                              <li><hr class="dropdown-divider bg-secondary"></li>`;
             }
 
@@ -154,4 +155,3 @@ async function submitLogin() {
         }
     } catch (error) { alert("Server connection error!"); }
 }
-

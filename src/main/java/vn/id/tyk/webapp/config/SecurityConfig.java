@@ -18,10 +18,9 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(); // Dùng thuật toán BCrypt để hash
+        return new BCryptPasswordEncoder(); 
     }
 
-    // Bean này giúp AuthController có thể gọi được chức năng đăng nhập
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
@@ -45,7 +44,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // 1. CÁC TRANG CÔNG KHAI (HTML VIEWS & PUBLIC API)
                 .requestMatchers(
-                    "/", 
+                    "/**", 
                     "/marketplace", 
                     "/news",        
                     "/guide",       
@@ -55,7 +54,8 @@ public class SecurityConfig {
                     "/uploads/**",
                     "/api/auth/**", 
                     "/api/news/**",
-                    "/css/**", "/js/**", "/img/**"
+                    "/css/**", "/js/**", "/img/**",
+                    "/settings"
                 ).permitAll()
                 
                 .requestMatchers(

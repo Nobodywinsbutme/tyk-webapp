@@ -1,4 +1,4 @@
-package vn.id.tyk.webapp.controller;
+package vn.id.tyk.webapp.controller.api;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

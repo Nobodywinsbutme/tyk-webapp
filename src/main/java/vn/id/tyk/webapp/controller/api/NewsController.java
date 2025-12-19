@@ -1,4 +1,4 @@
-package vn.id.tyk.webapp.controller;
+package vn.id.tyk.webapp.controller.api;
 
 import vn.id.tyk.webapp.dto.NewsDTO;
 import vn.id.tyk.webapp.entity.User;
@@ -20,7 +20,6 @@ public class NewsController {
     @Autowired
     private NewsService newsService;
 
-    // --- SỬA LỖI 1: Phải inject Repository vào mới dùng được ---
     @Autowired
     private UserRepository userRepository;
 
@@ -38,18 +37,15 @@ public class NewsController {
     // HÀM HELPER: Lấy User chuẩn (Hỗ trợ cả Session & RememberMe)
     // =========================================================
     private User getAuthenticatedUser(HttpSession session, Principal principal) {
-        // Cách 1: Thử lấy từ Session
         User sessionUser = (User) session.getAttribute("tyk_user");
         if (sessionUser != null) return sessionUser;
 
-        // Cách 2: Nếu Session mất, lấy từ Spring Security (Principal)
         if (principal != null) {
             String username = principal.getName();
-            // --- SỬA LỖI 1: Dùng biến instance userRepository (chữ thường) ---
             return userRepository.findByUsername(username).orElse(null);
         }
 
-        return null; // Không tìm thấy ai cả
+        return null; 
     }
 
     // API: POST /api/news/create

@@ -13,7 +13,6 @@ public class UserResponse {
     private String role;
     private Long coinBalance;
 
-    // Hàm tiện ích để chuyển từ Entity -> DTO
     public static UserResponse fromEntity(User user) {
         return UserResponse.builder()
                 .id(user.getId())
