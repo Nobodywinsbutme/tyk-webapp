@@ -3,3 +3,26 @@
 .form-control:focus { background-color: #2c2c2c; color: white; border-color: #ffc107; box-shadow: none; }
 .form-control::placeholder { color: #bbbbbb; opacity: 1; }
 .switch-link { cursor: pointer; text-decoration: underline; color: #ffc107; }
+.user-dropdown .dropdown-menu {
+    background-color: #212529; /* Màu nền tối khớp với theme */
+    border: 1px solid #495057;
+    margin-top: 0;
+}
+
+.user-dropdown .dropdown-item {
+    color: #fff;
+    transition: all 0.2s;
+}
+
+.user-dropdown .dropdown-item:hover {
+    background-color: #ffc107; /* Màu vàng khi hover item */
+    color: #000;
+}
+
+/* Logic để Hover là hiện menu (thay vì click) */
+@media (min-width: 992px) { /* Chỉ áp dụng trên máy tính */
+    .user-dropdown:hover .dropdown-menu {
+        display: block;
+        margin-top: 0;
+    }
+}
