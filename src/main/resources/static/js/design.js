@@ -213,10 +213,10 @@ async function deleteDesign(id) {
             credentials: 'include'
         });
         if (response.ok) {
-            alert("🗑️ Đã xóa bài viết!");
+            alert("🗑️ Deleted design successfully!");
             location.reload();
         } else {
-            alert("Không thể xóa bài viết này.");
+            alert("Could not delete this design.");
         }
     } catch (e) { alert("Server error"); }
 }
