@@ -62,7 +62,7 @@ async function submitUpload() {
         
         const text = await response.text();
         if (response.ok) {
-            alert("✅ Thành công!");
+            alert("✅ Success!");
             location.reload();
         } else {
             alert("❌ Error: " + text);

@@ -54,6 +54,7 @@ public class SecurityConfig {
                     "/api/designs/public", // API lấy danh sách bài public
                     "/uploads/**",
                     "/api/auth/**", 
+                    "/api/news/**",
                     "/css/**", "/js/**", "/img/**"
                 ).permitAll()
                 

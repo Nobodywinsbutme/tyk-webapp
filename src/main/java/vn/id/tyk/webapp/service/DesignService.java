@@ -75,13 +75,13 @@ public class DesignService {
         try {
             design.setCategory(DesignSubmission.DesignCategory.valueOf(category.toUpperCase()));
         } catch (Exception e) {
-            throw new RuntimeException("Category không hợp lệ");
+            throw new RuntimeException("Category not valid");
         }
 
         if (image != null && !image.isEmpty()) {
             design.setImageUrl(saveFile(image));
         } else {
-            throw new RuntimeException("Bắt buộc phải có ảnh!");
+            throw new RuntimeException("Must have an image!");
         }
 
         DesignSubmission saved = designRepository.save(design);
@@ -113,10 +113,10 @@ public class DesignService {
         DesignSubmission design;
 
         if ("ADMIN".equals(user.getRole())) {
-            design = designRepository.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy bài"));
+            design = designRepository.findById(id).orElseThrow(() -> new RuntimeException("Cannot find design"));
         } else {
             design = designRepository.findByIdAndCreator(id, user)
-                    .orElseThrow(() -> new RuntimeException("Bạn không có quyền xóa bài này"));
+                    .orElseThrow(() -> new RuntimeException("You do not have permission to delete this design"));
         }
 
         deleteFile(design.getImageUrl());
@@ -127,7 +127,7 @@ public class DesignService {
     public DesignResponse updateDesign(Long id, String title, String desc, MultipartFile newImage, String username) throws IOException {
         User user = userRepository.findByUsername(username).orElseThrow();
         DesignSubmission design = designRepository.findByIdAndCreator(id, user)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy bài hoặc không có quyền sửa"));
+                .orElseThrow(() -> new RuntimeException("Cannot find design or you do not have permission to edit"));
 
         design.setTitle(title);
         design.setDescription(desc);
@@ -146,7 +146,7 @@ public class DesignService {
     // 7. Duyệt / Từ chối bài (Admin)
     public void changeStatus(Long id, String statusStr, String adminUsername) {
         User admin = userRepository.findByUsername(adminUsername).orElseThrow();
-        DesignSubmission design = designRepository.findById(id).orElseThrow(() -> new RuntimeException("Bài viết không tồn tại"));
+        DesignSubmission design = designRepository.findById(id).orElseThrow(() -> new RuntimeException("Design not exist"));
 
         try {
             DesignSubmission.SubmissionStatus status = DesignSubmission.SubmissionStatus.valueOf(statusStr.toUpperCase());
@@ -154,7 +154,7 @@ public class DesignService {
             design.setApprovedBy(admin);
             designRepository.save(design);
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Trạng thái không hợp lệ");
+            throw new RuntimeException("Condition not valid");
         }
     }
 }
