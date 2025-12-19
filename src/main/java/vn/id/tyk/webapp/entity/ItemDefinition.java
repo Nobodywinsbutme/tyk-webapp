@@ -23,12 +23,8 @@ public class ItemDefinition {
 
     private String imageUrl; // Link ảnh icon của vật phẩm
 
-    // Loại: WEAPON, ARMOR, POTION...
-    @Enumerated(EnumType.STRING)
     private ItemType type; 
     
-    // Độ hiếm: COMMON, RARE, LEGENDARY
-    @Enumerated(EnumType.STRING)
     private ItemRarity rarity;
 
     private Double basePrice; // Giá tham khảo (để shop bán hoặc gợi ý)
