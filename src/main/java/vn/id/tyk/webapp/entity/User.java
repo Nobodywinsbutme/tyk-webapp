@@ -32,4 +32,6 @@ public class User {
 
     // Lý do bị ban (Admin ghi chú)
     private String banReason;
+
+    private String avatarUrl;
 }
