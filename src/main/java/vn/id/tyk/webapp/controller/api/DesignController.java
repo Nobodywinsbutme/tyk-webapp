@@ -8,7 +8,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import vn.id.tyk.webapp.dto.DesignResponse;
+import vn.id.tyk.webapp.dto.DesignResponseDTO;
 import vn.id.tyk.webapp.service.DesignService;
 
 import java.util.List;
@@ -30,7 +30,7 @@ public class DesignController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         try {
-            DesignResponse response = designService.createDesign(
+            DesignResponseDTO response = designService.createDesign(
                 title, description, category, image, userDetails.getUsername()
             );
             return ResponseEntity.ok(response);
@@ -41,13 +41,13 @@ public class DesignController {
 
     // 2. Lấy danh sách My Designs
     @GetMapping("/my-designs")
-    public ResponseEntity<List<DesignResponse>> getMyDesigns(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<List<DesignResponseDTO>> getMyDesigns(@AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(designService.getMyDesigns(userDetails.getUsername()));
     }
 
     // 3. Lấy danh sách Public (Ai cũng xem được)
     @GetMapping("/public")
-    public ResponseEntity<List<DesignResponse>> getPublicDesigns() {
+    public ResponseEntity<List<DesignResponseDTO>> getPublicDesigns() {
         return ResponseEntity.ok(designService.getPublicDesigns());
     }
 
@@ -71,7 +71,7 @@ public class DesignController {
             @RequestParam(value = "image", required = false) MultipartFile image,
             @AuthenticationPrincipal UserDetails userDetails) {
         try {
-            DesignResponse response = designService.updateDesign(
+            DesignResponseDTO response = designService.updateDesign(
                 id, title, description, image, userDetails.getUsername()
             );
             return ResponseEntity.ok(response);
@@ -84,7 +84,7 @@ public class DesignController {
 
     // 6. Lấy danh sách chờ duyệt (Pending)
     @GetMapping("/pending")
-    public ResponseEntity<List<DesignResponse>> getPendingDesigns() {
+    public ResponseEntity<List<DesignResponseDTO>> getPendingDesigns() {
         return ResponseEntity.ok(designService.getPendingDesigns());
     }
 

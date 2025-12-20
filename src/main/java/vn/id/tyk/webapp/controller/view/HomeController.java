@@ -32,4 +32,9 @@ public class HomeController {
     public String community() {
         return "community";
     }
+
+    @GetMapping("/marketplace/market")
+    public String showMarketBrowse(Model model) {
+        return "market";
+    }
 }

@@ -18,7 +18,6 @@ public class UserController {
 
     @GetMapping("/my-designs")
     public String myDesigns(Model model, HttpSession session, Principal principal) {
-
         User currentUser = userService.getAuthenticatedUser(session, principal);
 
         if (currentUser == null) {
@@ -26,7 +25,6 @@ public class UserController {
         }
         
         model.addAttribute("user", currentUser);
-        
         
         return "my-designs"; 
     }
@@ -44,4 +42,5 @@ public class UserController {
 
         return "settings"; 
     }
+
 }
