@@ -8,7 +8,7 @@ import java.time.format.DateTimeFormatter;
 
 @Data
 @Builder
-public class DesignResponse {
+public class DesignResponseDTO {
     private Long id;
     private String title;
     private String description;
@@ -18,10 +18,10 @@ public class DesignResponse {
     private String creatorName;
     private String createdAt; // Trả về dạng String dd-MM-yyyy cho dễ hiển thị
 
-    public static DesignResponse fromEntity(DesignSubmission design) {
+    public static DesignResponseDTO fromEntity(DesignSubmission design) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
         
-        return DesignResponse.builder()
+        return DesignResponseDTO.builder()
                 .id(design.getId())
                 .title(design.getTitle())
                 .description(design.getDescription())

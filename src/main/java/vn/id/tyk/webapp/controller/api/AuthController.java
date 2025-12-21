@@ -14,7 +14,7 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
 
-import vn.id.tyk.webapp.dto.LoginRequest;
+import vn.id.tyk.webapp.dto.LoginRequestDTO;
 import vn.id.tyk.webapp.dto.RegisterRequest;
 import vn.id.tyk.webapp.dto.UserResponse;
 import vn.id.tyk.webapp.entity.User;
@@ -46,7 +46,7 @@ public class AuthController {
 
     // 2. Đăng nhập (Vẫn giữ ở Controller vì liên quan trực tiếp đến HTTP Session)
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest, 
+    public ResponseEntity<?> loginUser(@RequestBody LoginRequestDTO loginRequest, 
                                        HttpServletRequest request, 
                                        HttpServletResponse response) {
         try {

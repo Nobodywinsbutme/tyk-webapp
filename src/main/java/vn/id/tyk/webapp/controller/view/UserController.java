@@ -18,15 +18,16 @@ public class UserController {
 
     @GetMapping("/my-designs")
     public String myDesigns(Model model, HttpSession session, Principal principal) {
-
         User currentUser = userService.getAuthenticatedUser(session, principal);
 
         if (currentUser == null) {
-            return "redirect:/login";
+            if (session != null) {
+                session.invalidate();
+            }
+            return "redirect:/?message=expired";
         }
         
         model.addAttribute("user", currentUser);
-        
         
         return "my-designs"; 
     }
@@ -37,11 +38,15 @@ public class UserController {
         User currentUser = userService.getAuthenticatedUser(session, principal);
 
         if (currentUser == null) {
-            return "redirect:/login";
+            if (session != null) {
+                session.invalidate();
+            }
+            return "redirect:/?message=expired";
         }
 
         model.addAttribute("user", currentUser);
 
         return "settings"; 
     }
+
 }

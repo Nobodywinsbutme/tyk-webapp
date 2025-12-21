@@ -3,7 +3,7 @@ package vn.id.tyk.webapp.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import vn.id.tyk.webapp.dto.DesignResponse;
+import vn.id.tyk.webapp.dto.DesignResponseDTO;
 import vn.id.tyk.webapp.entity.DesignSubmission;
 import vn.id.tyk.webapp.entity.User;
 import vn.id.tyk.webapp.repository.DesignRepository;
@@ -56,7 +56,7 @@ public class DesignService {
     // --- LOGIC NGHIỆP VỤ ---
 
     // 1. Tạo mới bài viết
-    public DesignResponse createDesign(String title, String desc, String category, MultipartFile image, String username) throws IOException {
+    public DesignResponseDTO createDesign(String title, String desc, String category, MultipartFile image, String username) throws IOException {
         User user = userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
 
         DesignSubmission design = new DesignSubmission();
@@ -85,26 +85,26 @@ public class DesignService {
         }
 
         DesignSubmission saved = designRepository.save(design);
-        return DesignResponse.fromEntity(saved);
+        return DesignResponseDTO.fromEntity(saved);
     }
 
     // 2. Lấy danh sách Public (Approved)
-    public List<DesignResponse> getPublicDesigns() {
+    public List<DesignResponseDTO> getPublicDesigns() {
         return designRepository.findByStatusOrderByCreatedAtDesc(DesignSubmission.SubmissionStatus.APPROVED)
-                .stream().map(DesignResponse::fromEntity).collect(Collectors.toList());
+                .stream().map(DesignResponseDTO::fromEntity).collect(Collectors.toList());
     }
 
     // 3. Lấy danh sách cá nhân
-    public List<DesignResponse> getMyDesigns(String username) {
+    public List<DesignResponseDTO> getMyDesigns(String username) {
         User user = userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
         return designRepository.findByCreatorOrderByCreatedAtDesc(user)
-                .stream().map(DesignResponse::fromEntity).collect(Collectors.toList());
+                .stream().map(DesignResponseDTO::fromEntity).collect(Collectors.toList());
     }
 
     // 4. Lấy danh sách chờ duyệt (Cho Admin)
-    public List<DesignResponse> getPendingDesigns() {
+    public List<DesignResponseDTO> getPendingDesigns() {
         return designRepository.findByStatus(DesignSubmission.SubmissionStatus.PENDING)
-                .stream().map(DesignResponse::fromEntity).collect(Collectors.toList());
+                .stream().map(DesignResponseDTO::fromEntity).collect(Collectors.toList());
     }
 
     // 5. Xóa bài viết
@@ -124,7 +124,7 @@ public class DesignService {
     }
 
     // 6. Cập nhật bài viết
-    public DesignResponse updateDesign(Long id, String title, String desc, MultipartFile newImage, String username) throws IOException {
+    public DesignResponseDTO updateDesign(Long id, String title, String desc, MultipartFile newImage, String username) throws IOException {
         User user = userRepository.findByUsername(username).orElseThrow();
         DesignSubmission design = designRepository.findByIdAndCreator(id, user)
                 .orElseThrow(() -> new RuntimeException("Cannot find design or you do not have permission to edit"));
@@ -140,7 +140,7 @@ public class DesignService {
         // Sửa xong phải duyệt lại
         design.setStatus(DesignSubmission.SubmissionStatus.PENDING);
         
-        return DesignResponse.fromEntity(designRepository.save(design));
+        return DesignResponseDTO.fromEntity(designRepository.save(design));
     }
 
     // 7. Duyệt / Từ chối bài (Admin)
