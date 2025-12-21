@@ -5,5 +5,6 @@ public enum ItemType {
     ARMOR,    // Giáp
     POTION,   // Thuốc
     MATERIAL, // Nguyên liệu
-    MISC      // Khác
+    MISC,
+    SKIN    // Khác
 }

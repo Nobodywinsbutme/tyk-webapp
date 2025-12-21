@@ -16,4 +16,5 @@ public class MarketItemDTO {
     private Double price;
     private String sellerName;
     private String type;
+    private Integer quantity;
 }

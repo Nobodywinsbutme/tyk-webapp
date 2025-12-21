@@ -11,22 +11,19 @@ public class MarketListing {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Người bán là ai?
     @ManyToOne
     @JoinColumn(name = "seller_id")
     private User seller;
 
-    // Bán cái gì? (Liên kết tới vật phẩm trong kho hoặc Design)
-    @OneToOne
-    @JoinColumn(name = "inventory_item_id")
-    private InventoryItem item; 
+    @ManyToOne 
+    @JoinColumn(name = "item_definition_id", nullable = false)
+    private ItemDefinition itemDefinition;
 
-    // Giá bán bao nhiêu?
     private Long price;
 
-    // Thời gian đăng bán
     private LocalDateTime listedAt = LocalDateTime.now();
 
-    // Trạng thái: ACTIVE (Đang bán), SOLD (Đã bán), CANCELLED (Đã gỡ)
     private String status; 
+
+    private Integer quantity;
 }

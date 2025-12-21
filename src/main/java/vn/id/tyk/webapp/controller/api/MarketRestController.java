@@ -1,14 +1,13 @@
 package vn.id.tyk.webapp.controller.api;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 import vn.id.tyk.webapp.dto.MarketItemDTO;
 import vn.id.tyk.webapp.service.MarketService;
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+    import vn.id.tyk.webapp.dto.SellRequestDTO;
 
 @RestController
 @RequestMapping("/api/market")
@@ -24,5 +23,15 @@ public class MarketRestController {
             @RequestParam(required = false) String search) {
         
         return marketService.getAllMarketItems(type, minPrice, maxPrice, search);
+    }
+
+    @PostMapping("/sell/{userId}")
+    public ResponseEntity<?> sellItem(@PathVariable Long userId, @RequestBody SellRequestDTO request) {
+        try {
+            marketService.sellItem(userId, request);
+            return ResponseEntity.ok("Item listed successfully");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

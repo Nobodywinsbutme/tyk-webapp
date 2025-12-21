@@ -199,34 +199,63 @@
         </div>
 
         <div class="section-header">
-            <h4 class="fw-bold mb-0"><i class="bi bi-lightning-fill text-warning me-2"></i> Weekly Biggest Deals</h4>
-            <a href="/marketplace/market" class="text-decoration-none text-secondary small">View Market <i class="bi bi-arrow-right ms-1"></i></a>
+            <div class="d-flex align-items-center">
+                <h4 class="fw-bold mb-0 text-white">
+                    <i class="bi bi-stars text-warning me-2"></i> Newest Arrivals
+                </h4>
+                <span class="badge bg-danger ms-3">HOT</span>
+            </div>
+            <a href="/marketplace/market" class="text-decoration-none text-secondary small">View All <i class="bi bi-arrow-right ms-1"></i></a>
         </div>
 
-        <div th:if="${weeklyDeals == null or #lists.isEmpty(weeklyDeals)}" class="d-flex justify-content-center mb-5">
+        <div th:if="${newItems == null or #lists.isEmpty(newItems)}" class="d-flex justify-content-center mb-5">
             <div class="empty-deals">
-                <i class="bi bi-box2-heart"></i>
-                <h5>No deals available yet</h5>
-                <p class="small mb-0">Check back later for the hottest items.</p>
+                <i class="bi bi-box2"></i>
+                <h5>No items listed yet</h5>
+                <p class="small mb-0">Be the first to sell something!</p>
             </div>
         </div>
 
-        <div th:unless="${weeklyDeals == null or #lists.isEmpty(weeklyDeals)}" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-4 mb-5">
-            <div class="col" th:each="deal : ${weeklyDeals}">
-                <div class="deal-card shadow-sm h-100">
-                    <div>
-                        <img th:src="${deal.itemDefinition.imageUrl}" class="deal-img" alt="Item Image">
-                        <h6 class="text-white text-truncate mb-2" th:text="${deal.itemDefinition.name}">Item Name</h6>
-                        <div class="deal-price">
-                            <i class="bi bi-coin"></i> 
-                            <span th:text="${#numbers.formatDecimal(deal.price, 0, 'COMMA', 0, 'POINT')}">0</span>
+        <div th:unless="${newItems == null or #lists.isEmpty(newItems)}" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-4 mb-5">
+            <div class="col" th:each="item : ${newItems}">
+                <a th:href="@{/marketplace/market(highlight=${item.id})}" class="text-decoration-none">
+                    <div class="deal-card shadow-sm h-100 position-relative">
+                        
+                        <span class="position-absolute top-0 start-0 badge bg-danger m-2 shadow-sm" style="z-index: 5;">NEW</span>
+
+                        <div class="position-relative text-center">
+                            <img th:src="${item.itemDefinition.imageUrl}" class="deal-img" alt="Item Image">
+                            
+                            <span class="position-absolute bottom-0 end-0 badge bg-dark border border-secondary rounded-pill mb-2 me-2" 
+                                  th:if="${item.quantity > 1}"
+                                  th:text="'x' + ${item.quantity}">
+                                x10
+                            </span>
+                        </div>
+
+                        <div class="mt-2">
+                            <h6 class="text-white text-truncate mb-1" th:text="${item.itemDefinition.name}">Item Name</h6>
+                            
+                            <div class="d-flex justify-content-center gap-2 mb-2">
+                                <span class="badge bg-secondary" style="font-size: 0.65rem;" th:text="${item.itemDefinition.type}">TYPE</span>
+                                <span class="badge" 
+                                      th:classappend="${item.itemDefinition.rarity.toString() == 'LEGENDARY' ? 'bg-warning text-dark' : (item.itemDefinition.rarity.toString() == 'RARE' ? 'bg-info text-dark' : 'bg-secondary')}"
+                                      style="font-size: 0.65rem;" 
+                                      th:text="${item.itemDefinition.rarity}">RARITY</span>
+                            </div>
+
+                            <div class="deal-price">
+                                <i class="bi bi-coin text-warning"></i> 
+                                <span th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT')}">0</span>
+                            </div>
+                        </div>
+
+                        <div class="text-secondary small mt-3 pt-2 border-top border-secondary d-flex justify-content-between">
+                            <span><i class="bi bi-person-circle me-1"></i> <span th:text="${item.seller.username}">User</span></span>
+                            <span th:text="${#temporals.format(item.listedAt, 'HH:mm dd/MM')}">Time</span>
                         </div>
                     </div>
-                    <div class="text-secondary small mt-3 pt-2 border-top border-secondary">
-                        <i class="bi bi-clock-history me-1"></i>
-                        <span th:text="${#temporals.format(deal.listedAt, 'dd/MM HH:mm')}">Time</span>
-                    </div>
-                </div>
+                </a>
             </div>
         </div>
 

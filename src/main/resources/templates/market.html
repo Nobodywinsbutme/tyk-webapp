@@ -143,6 +143,14 @@
             margin-bottom: 15px;
             display: block;
         }
+        .bookmark-icon {
+            cursor: pointer;
+            transition: color 0.2s;
+            text-shadow: 0 0 3px rgba(0,0,0,0.8); /* Viền đen nhẹ để nổi trên nền ảnh */
+        }
+        .bookmark-icon:hover {
+            color: #84cc16 !important; /* Màu xanh lá khi di chuột vào */
+        }
     </style>
 </head>
 <body>
@@ -252,7 +260,8 @@
 
     <div th:replace="~{fragments/modals :: registerModal}"></div>
     <div th:replace="~{fragments/modals :: loginModal}"></div>
-
+    <input type="hidden" id="currentUserId" th:if="${user != null}" th:value="${user.id}">
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script th:src="@{/js/auth.js}"></script>
 
@@ -343,23 +352,41 @@
 
             items.forEach(item => {
                 const card = `
-                    <div class="col">
-                        <div class="market-card h-100" onclick="viewDetails(${item.id})">
-                            <i class="bi bi-bookmark bookmark-icon"></i>
-                            <div class="card-img-wrapper">
-                                <img src="${item.imageUrl || '/img/logo.png'}" alt="${item.name}">
-                            </div>
-                            <div class="card-info">
-                                <div class="item-price">
-                                    <i class="bi bi-coin"></i> ${(item.price || 0).toLocaleString()}
+                            <div class="col">
+                                <div class="market-card h-100 d-flex flex-column" onclick="viewDetails(${item.id})">
+                                    
+                                    <div class="position-absolute top-0 end-0 p-2 z-1" onclick="toggleBookmark(event, ${item.id})">
+                                        <i class="bi bi-bookmark-fill text-secondary fs-5 bookmark-icon"></i>
+                                    </div>
+
+                                    <div class="card-img-wrapper position-relative">
+                                        <img src="${item.imageUrl || '/img/logo.png'}" alt="${item.name}">
+                                        
+                                        ${item.quantity > 1 ? `<span class="position-absolute bottom-0 end-0 badge bg-dark border border-secondary rounded-pill m-2">x${item.quantity}</span>` : ''}
+                                    </div>
+
+                                    <div class="card-info flex-grow-1 d-flex flex-column justify-content-between">
+                                        <div>
+                                            <div class="item-price">
+                                                <i class="bi bi-coin"></i> ${(item.price || 0).toLocaleString()}
+                                            </div>
+                                            <div class="item-name" title="${item.name}">${item.name}</div>
+                                            <div class="seller-name text-uppercase" style="font-size: 0.65rem">
+                                                <i class="bi bi-person"></i> ${item.sellerName || 'Unknown'}
+                                            </div>
+                                        </div>
+
+                                        <div class="d-flex gap-2 mt-3 pt-2 border-top border-secondary">
+                                            <button class="btn btn-success btn-sm flex-fill fw-bold" onclick="buyItem(event, ${item.id})">
+                                                Buy
+                                            </button>
+                                            <button class="btn btn-outline-warning btn-sm flex-fill fw-bold" onclick="makeOffer(event, ${item.id})">
+                                                Offer
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="item-name" title="${item.name}">${item.name}</div>
-                                <div class="seller-name text-uppercase" style="font-size: 0.65rem">
-                                    <i class="bi bi-person"></i> ${item.sellerName || 'Unknown'}
-                                </div>
-                            </div>
-                        </div>
-                    </div>`;
+                            </div>`;
                 if(grid) grid.innerHTML += card;
             });
         }
@@ -381,6 +408,65 @@
         function viewDetails(id) {
             console.log("Viewing item:", id);
             // window.location.href = `/marketplace/item/${id}`;
+        }
+
+        async function buyItem(listingId) {
+            // Giả sử bạn lưu userId trong localStorage hoặc thẻ hidden giống bên inventory
+            // Nếu chưa có thẻ hidden, hãy thêm <input type="hidden" id="currentUserId" th:value="${user.id}"> vào HTML
+            const userId = document.getElementById('currentUserId').value; 
+
+            if(!confirm("Are you sure you want to buy this item?")) return;
+
+            try {
+                const res = await fetch(`/api/market/buy/${userId}/${listingId}`, {
+                    method: 'POST'
+                });
+
+                if(res.ok) {
+                    alert("Purchase successful! Item is now in your inventory.");
+                    loadMarketItems(); // Load lại chợ để ẩn món vừa mua
+                    // Cập nhật số dư coin trên navbar nếu cần
+                } else {
+                    const msg = await res.text();
+                    alert("Purchase failed: " + msg);
+                }
+            } catch(e) {
+                console.error(e);
+                alert("Connection error");
+            }
+        }
+
+        function toggleBookmark(event, id) {
+            event.stopPropagation(); // Ngăn không cho click vào card (viewDetails)
+            
+            // Đổi icon để tạo hiệu ứng visual ngay lập tức
+            const icon = event.currentTarget.querySelector('i');
+            if (icon.classList.contains('text-secondary')) {
+                icon.classList.remove('text-secondary');
+                icon.classList.add('text-warning'); // Màu vàng khi đã bookmark
+                // Gọi API bookmark tại đây...
+                console.log("Bookmarked item " + id);
+            } else {
+                icon.classList.add('text-secondary');
+                icon.classList.remove('text-warning');
+                // Gọi API un-bookmark tại đây...
+                console.log("Unbookmarked item " + id);
+            }
+        }
+
+        // Xử lý nút Mua
+        function buyItem(event, id) {
+            event.stopPropagation(); // Ngăn không cho click vào card
+            console.log("Buy item clicked: " + id);
+            // Gọi API mua hàng tại đây (như code ở bước trước)
+            // callBuyApi(id)...
+        }
+
+        // Xử lý nút Offer (Trả giá)
+        function makeOffer(event, id) {
+            event.stopPropagation(); // Ngăn không cho click vào card
+            console.log("Make offer clicked: " + id);
+            // Mở modal trả giá hoặc logic offer tại đây
         }
     </script>
 </body>

@@ -15,4 +15,6 @@ public class InventoryResponseDTO {
     private String description;   
     private boolean isTradable;   
     private boolean isBookmarked;
+    private Long price;
+    private String listedAt;
 }

@@ -3,9 +3,16 @@ package vn.id.tyk.webapp.controller.view;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import vn.id.tyk.webapp.repository.MarketListingRepository;
 
 @Controller
 public class HomeController {
+
+    private final MarketListingRepository marketRepository;
+
+    public HomeController(MarketListingRepository marketRepository) {
+        this.marketRepository = marketRepository;
+    }
 
     @GetMapping("/")
     public String home(Model model) {
@@ -35,6 +42,7 @@ public class HomeController {
 
     @GetMapping("/marketplace/market")
     public String showMarketBrowse(Model model) {
+        model.addAttribute("newItems", marketRepository.findTop10ByStatusOrderByListedAtDesc("ACTIVE"));
         return "market";
     }
 }
