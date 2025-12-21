@@ -12,16 +12,19 @@ import vn.id.tyk.webapp.dto.MarketItemDTO;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class MarketService {
+    
     private final MarketListingRepository marketRepository;
     private final InventoryRepository inventoryRepository;
-    private final UserRepository userRepository; // Giả sử bạn đã có cái này
+    private final UserRepository userRepository;
+    
+    // Inject InventoryService để tái sử dụng hàm addItemToInventory
+    private final InventoryService inventoryService; 
 
-
+    // --- 1. LẤY DANH SÁCH CHỢ ---
     public List<MarketItemDTO> getAllMarketItems(String type, Double minPrice, Double maxPrice, String search) {
         ItemType itemType = null;
         if (type != null && !type.isEmpty()) {
@@ -41,14 +44,14 @@ public class MarketService {
                         .price(m.getPrice() != null ? m.getPrice().doubleValue() : 0.0)
                         .sellerName(m.getSeller().getUsername())
                         .type(m.getItemDefinition().getType().toString())
-                        .quantity(m.getQuantity()) // Thêm hiển thị số lượng
+                        .quantity(m.getQuantity())
                         .build())
                 .collect(Collectors.toList());
     }
 
+    // --- 2. ĐĂNG BÁN (SELL) ---
     @Transactional
     public void sellItem(Long userId, SellRequestDTO request) {
-        // Tìm vật phẩm trong kho
         InventoryItem item = inventoryRepository.findById(request.getItemId())
             .orElseThrow(() -> new RuntimeException("Item not found"));
 
@@ -57,16 +60,13 @@ public class MarketService {
         }
 
         if (item.getQuantity() < request.getQuantity()) {
-            throw new RuntimeException("Not enough items in inventory!");
+            throw new RuntimeException("Not enough items!");
         }
 
-        // Tạo bản ghi bán hàng
+        // Tạo Listing
         MarketListing listing = new MarketListing();
         listing.setSeller(item.getUser());
-        
-        // --- SỬA QUAN TRỌNG: Lưu Definition thay vì Item ---
-        listing.setItemDefinition(item.getItemDefinition()); 
-        
+        listing.setItemDefinition(item.getItemDefinition());
         listing.setPrice(request.getPrice());
         listing.setQuantity(request.getQuantity());
         listing.setStatus("ACTIVE");
@@ -74,29 +74,26 @@ public class MarketService {
 
         marketRepository.save(listing);
 
-        // Trừ kho hàng
+        // Trừ kho
         int newQuantity = item.getQuantity() - request.getQuantity();
-
         if (newQuantity > 0) {
             item.setQuantity(newQuantity);
             inventoryRepository.save(item);
         } else {
-            // --- SỬA: Xóa thoải mái mà không sợ lỗi TransientObjectException ---
             inventoryRepository.delete(item);
         }
     }
 
+    // --- 3. MUA HÀNG (BUY) ---
     @Transactional
     public void buyItem(Long buyerId, Long listingId) {
-        // Tìm đơn hàng
         MarketListing listing = marketRepository.findById(listingId)
             .orElseThrow(() -> new RuntimeException("Listing not found"));
 
         if (!"ACTIVE".equals(listing.getStatus())) {
-            throw new RuntimeException("Item is no longer available");
+            throw new RuntimeException("Item unavailable");
         }
         
-        // Không cho phép tự mua hàng của mình
         if (listing.getSeller().getId().equals(buyerId)) {
              throw new RuntimeException("Cannot buy your own item");
         }
@@ -104,7 +101,6 @@ public class MarketService {
         User buyer = userRepository.findById(buyerId).orElseThrow();
         User seller = listing.getSeller();
 
-        // Kiểm tra tiền
         if (buyer.getCoinBalance() < listing.getPrice()) {
             throw new RuntimeException("Not enough coins!");
         }
@@ -113,30 +109,37 @@ public class MarketService {
         buyer.setCoinBalance(buyer.getCoinBalance() - listing.getPrice());
         seller.setCoinBalance(seller.getCoinBalance() + listing.getPrice());
 
-        // --- SỬA: CHUYỂN VẬT PHẨM (Logic: Tái tạo vật phẩm cho người mua) ---
-        
-        // 1. Kiểm tra xem người mua đã có vật phẩm loại này trong túi chưa?
-        Optional<InventoryItem> existingItemOpt = inventoryRepository.findByUserAndItemDefinition(buyer, listing.getItemDefinition());
+        // --- GỌI INVENTORY SERVICE ĐỂ CHUYỂN ĐỒ ---
+        inventoryService.addItemToInventory(buyer, listing.getItemDefinition(), listing.getQuantity());
 
-        if (existingItemOpt.isPresent()) {
-            // Nếu có rồi -> Cộng dồn số lượng
-            InventoryItem existingItem = existingItemOpt.get();
-            existingItem.setQuantity(existingItem.getQuantity() + listing.getQuantity());
-            inventoryRepository.save(existingItem);
-        } else {
-            // Nếu chưa có -> Tạo mới hoàn toàn
-            InventoryItem newItem = new InventoryItem();
-            newItem.setUser(buyer);
-            newItem.setItemDefinition(listing.getItemDefinition()); // Lấy thông tin từ Listing
-            newItem.setQuantity(listing.getQuantity());
-            inventoryRepository.save(newItem);
-        }
-
-        // Cập nhật trạng thái đơn hàng -> SOLD
+        // Kết thúc giao dịch
         listing.setStatus("SOLD");
         marketRepository.save(listing);
         
         userRepository.save(buyer);
         userRepository.save(seller);
+    }
+    
+    // --- 4. HỦY BÁN (CANCEL) ---
+    @Transactional
+    public void cancelListing(Long listingId) {
+        MarketListing listing = marketRepository.findById(listingId)
+                .orElseThrow(() -> new RuntimeException("Listing not found"));
+
+        // --- GỌI INVENTORY SERVICE ĐỂ TRẢ ĐỒ VỀ KHO ---
+        inventoryService.addItemToInventory(listing.getSeller(), listing.getItemDefinition(), listing.getQuantity());
+
+        // Xóa Listing
+        marketRepository.delete(listing);
+    }
+
+    // --- 5. SỬA GIÁ (UPDATE PRICE) ---
+    @Transactional
+    public void updatePrice(Long listingId, Long newPrice) {
+        MarketListing listing = marketRepository.findById(listingId)
+                .orElseThrow(() -> new RuntimeException("Listing not found"));
+        
+        listing.setPrice(newPrice);
+        marketRepository.save(listing);
     }
 }

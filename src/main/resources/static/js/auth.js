@@ -49,6 +49,12 @@ function checkLoginState() {
         if (window.location.pathname === "/marketplace") {
             fetchRealCoin(user.username);
         }
+        if (window.location.pathname === "/marketplace/market") {
+            fetchRealCoin(user.username);
+        }
+        if (window.location.pathname === "/inventory") {
+            fetchRealCoin(user.username);
+        }
 
     } else {
         // Chưa đăng nhập

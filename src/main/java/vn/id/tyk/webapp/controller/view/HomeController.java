@@ -21,8 +21,9 @@ public class HomeController {
     }
 
     @GetMapping("/marketplace")
-    public String marketplace() {
-        return "marketplace";
+    public String marketplace(Model model) {
+        model.addAttribute("newItems", marketRepository.findTop10ByStatusOrderByListedAtDesc("ACTIVE"));  
+        return "marketplace"; // Trả về file marketplace.html
     }
 
     @GetMapping("/news")

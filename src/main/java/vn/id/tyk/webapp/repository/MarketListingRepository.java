@@ -11,7 +11,6 @@ import org.springframework.data.domain.Pageable;
 
 public interface MarketListingRepository extends JpaRepository<MarketListing, Long> {
 
-    // CHÚ Ý: m.item.itemDefinition (Phải đi qua item)
     @Query("SELECT m FROM MarketListing m " +
            "WHERE m.status = 'ACTIVE' " +
            "AND (:type IS NULL OR m.itemDefinition.type = :type) " +

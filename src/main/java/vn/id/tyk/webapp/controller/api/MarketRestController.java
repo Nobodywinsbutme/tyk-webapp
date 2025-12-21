@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-    import vn.id.tyk.webapp.dto.SellRequestDTO;
+import vn.id.tyk.webapp.dto.SellRequestDTO;
 
 @RestController
 @RequestMapping("/api/market")
@@ -34,4 +34,37 @@ public class MarketRestController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+    
+    @PostMapping("/buy/{userId}/{listingId}")
+    public ResponseEntity<?> buyItem(@PathVariable Long userId, @PathVariable Long listingId) {
+        try {
+            marketService.buyItem(userId, listingId);
+            return ResponseEntity.ok("Purchase successful");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // 4. Hủy bán (Cancel) -> Cho nút Thùng rác
+    @DeleteMapping("/{listingId}")
+    public ResponseEntity<?> cancelListing(@PathVariable Long listingId) {
+        try {
+            marketService.cancelListing(listingId);
+            return ResponseEntity.ok("Listing cancelled");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // 5. Sửa giá (Update Price) -> Cho nút Bút chì
+    @PutMapping("/{listingId}")
+    public ResponseEntity<?> updatePrice(@PathVariable Long listingId, @RequestParam Long price) {
+        try {
+            marketService.updatePrice(listingId, price);
+            return ResponseEntity.ok("Price updated");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
 }

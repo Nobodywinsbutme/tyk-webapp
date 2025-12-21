@@ -21,7 +21,10 @@ public class UserController {
         User currentUser = userService.getAuthenticatedUser(session, principal);
 
         if (currentUser == null) {
-            return "redirect:/login";
+            if (session != null) {
+                session.invalidate();
+            }
+            return "redirect:/?message=expired";
         }
         
         model.addAttribute("user", currentUser);
@@ -35,7 +38,10 @@ public class UserController {
         User currentUser = userService.getAuthenticatedUser(session, principal);
 
         if (currentUser == null) {
-            return "redirect:/login";
+            if (session != null) {
+                session.invalidate();
+            }
+            return "redirect:/?message=expired";
         }
 
         model.addAttribute("user", currentUser);

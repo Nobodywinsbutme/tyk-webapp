@@ -17,7 +17,7 @@
             padding-top: 80px; /* Tránh bị Navbar che mất nội dung */
         }
 
-        /* === CUSTOM NAVBAR (Copy từ Marketplace) === */
+        /* === CUSTOM NAVBAR === */
         .marketplace-nav {
             background-color: #1a1a1a;
             border-bottom: 1px solid #333;
@@ -95,11 +95,7 @@
             color: white;
         }
         .sidebar-search i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #9ca3af;
+            position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #9ca3af;
         }
 
         /* === MAIN CONTENT AREA === */
@@ -160,8 +156,7 @@
             object-fit: contain;
         }
         .not-tradeable-badge {
-            position: absolute;
-            bottom: 0; left: 0; width: 100%;
+            position: absolute; bottom: 0; left: 0; width: 100%;
             background-color: rgba(17, 24, 39, 0.9);
             color: #d1d5db;
             font-size: 10px;
@@ -253,7 +248,7 @@
 
                 <div class="mb-3">
                     <label class="text-secondary text-sm mb-2">Rarity</label>
-                    <select class="form-select ..." id="rarityFilter" onchange="filterRarity(this.value)">
+                    <select class="form-select" id="rarityFilter" onchange="filterRarity(this.value)">
                         <option value="">All Rarities</option>
                         <option value="COMMON">Common</option> 
                         <option value="RARE">Rare</option>
@@ -268,8 +263,6 @@
                     <div class="custom-tabs">
                         <button class="tab-btn active" onclick="switchTab('owned')" id="tab-owned">Owned</button>
                         <button class="tab-btn" onclick="switchTab('on_sale')" id="tab-on_sale">On sale</button>
-                        <button class="tab-btn" onclick="switchTab('bookmark')" id="tab-bookmark">Bookmark</button>
-                        <button class="tab-btn" onclick="switchTab('offer')" id="tab-offer">Offer</button>
                     </div>
 
                     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -409,31 +402,32 @@
                 if (currentTab === 'owned') {
                     // Nếu đang ở kho -> Hiện nút Bán
                     actionButton = `
-                                    <button class="btn btn-warning fw-bold shadow" onclick="openSellModal(${item.id}, '${item.name}', '${item.imageUrl || '/img/logo.png'}', ${item.quantity})">
-                                        <i class="bi bi-tag-fill me-1"></i> Sell Item
-                                    </button>`;
+                        <button class="btn btn-warning fw-bold shadow" onclick="openSellModal(${item.id}, '${item.name}', '${item.imageUrl || '/img/logo.png'}', ${item.quantity})">
+                            <i class="bi bi-tag-fill me-1"></i> Sell Item
+                        </button>`;
                 } else if (currentTab === 'on_sale') {
                     // Nếu đang ở tab On Sale -> Hiện Giá bán
                     actionButton = `
-                                    <div class="d-flex flex-column align-items-center w-75">
-                                    <div class="bg-black bg-opacity-75 text-warning fw-bold py-1 px-3 rounded mb-2 border border-warning w-100 text-center">
-                                        <i class="bi bi-coin"></i> ${(item.price || 0).toLocaleString()}
-                                    </div>
-                                    
-                                    <div class="d-flex gap-2 w-100">
-                                        <button class="btn btn-primary btn-sm flex-grow-1 shadow" 
-                                                onclick="event.stopPropagation(); openEditModal(${item.id}, ${item.price || 0})" 
-                                                title="Edit Price">
-                                            <i class="bi bi-pencil-square"></i>
-                                        </button>
-                                        <button class="btn btn-danger btn-sm flex-grow-1 shadow" 
-                                                onclick="event.stopPropagation(); cancelListing(${item.id})" 
-                                                title="Remove from Market">
-                                            <i class="bi bi-trash3-fill"></i>
-                                        </button>
-                                    </div>
-                                </div>`;
+                        <div class="d-flex flex-column align-items-center w-75">
+                            <div class="bg-black bg-opacity-75 text-warning fw-bold py-1 px-3 rounded mb-2 border border-warning w-100 text-center">
+                                <i class="bi bi-coin"></i> ${(item.price || 0).toLocaleString()}
+                            </div>
+                            
+                            <div class="d-flex gap-2 w-100">
+                                <button class="btn btn-primary btn-sm flex-grow-1 shadow" 
+                                        onclick="event.stopPropagation(); openEditModal(${item.id}, ${item.price || 0})" 
+                                        title="Edit Price">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <button class="btn btn-danger btn-sm flex-grow-1 shadow" 
+                                        onclick="event.stopPropagation(); cancelListing(${item.id})" 
+                                        title="Remove from Market">
+                                    <i class="bi bi-trash3-fill"></i>
+                                </button>
+                            </div>
+                        </div>`;
                 }
+                // ĐÃ XÓA LOGIC BOOKMARK Ở ĐÂY
 
                 const cardHtml = `
                     <div class="col">
@@ -540,7 +534,7 @@
             }
 
             try {
-                const res = await fetch(`/api/inventory/sell/${userId}`, {
+                const res = await fetch(`/api/market/sell/${userId}`, { // Đã sửa endpoint cho đúng với controller cũ
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     // Gửi thêm quantity trong body JSON
@@ -582,7 +576,7 @@
                 const res = await fetch(`/api/market/${listingId}`, { method: 'DELETE' });
                 if(res.ok) {
                     alert("Item returned to inventory.");
-                    loadInventory(currentPage); // Load lại danh sách
+                    loadInventory(currentPage); // Load lại danh sách, quan trọng!
                 } else {
                     alert("Failed to cancel.");
                 }

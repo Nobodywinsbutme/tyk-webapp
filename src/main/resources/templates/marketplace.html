@@ -130,15 +130,14 @@
                 <div class="hero-left">
                     <h1 class="hero-title">Discover Exclusive <br><span>Game Items</span></h1>
                     
-                    <form action="/marketplace/market" method="get">
+                    <form id="heroSearchForm" action="/marketplace/market" method="get">
                         <div class="big-search-box shadow-lg">
                             <select class="search-select d-none d-sm-block" name="type">
                                 <option value="">All Items</option>
-                                <option value="weapon">Weapon</option>
-                                <option value="armor">Armor</option>
-                                <option value="skin">Skin</option>
+                                <option value="WEAPON">Weapon</option> <option value="ARMOR">Armor</option>
+                                <option value="SKIN">Skin</option>
                             </select>
-                            <input type="text" name="keyword" class="search-input-hero" placeholder="Search items, skills, skins...">
+                            <input type="text" name="search" class="search-input-hero" placeholder="Search items, skills, skins...">
                             <button type="submit" class="search-btn-hero"><i class="bi bi-search"></i></button>
                         </div>
                     </form>
@@ -269,25 +268,28 @@
 
     <script>
     document.addEventListener("DOMContentLoaded", function() {
-        // 1. Khởi tạo trạng thái User
         initMarketplaceUI();
 
-        // 2. Xử lý Form tìm kiếm ở Hero Section
-        const searchForm = document.querySelector('form[action="/marketplace/market"]');
+        const searchForm = document.getElementById('heroSearchForm');
         if(searchForm){
             searchForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                const type = this.querySelector('select[name="type"]').value;
-                const keyword = this.querySelector('input[name="keyword"]').value;
+                e.preventDefault(); 
                 
-                // Chuyển hướng sang trang browse với query params
-                let url = `/marketplace/market?keyword=${encodeURIComponent(keyword)}`;
-                if(type) url += `&type=${type.toUpperCase()}`;
-                window.location.href = url;
+                const type = this.querySelector('select[name="type"]').value;
+                const searchVal = this.querySelector('input[name="search"]').value; 
+                
+
+                let url = `/marketplace/market?`;
+                const params = [];
+                
+                if(searchVal) params.push(`search=${encodeURIComponent(searchVal)}`);
+                if(type) params.push(`type=${type}`);
+                
+                // Chuyển trang
+                window.location.href = url + params.join('&');
             });
         }
     });
-
     function initMarketplaceUI() {
         const savedUser = localStorage.getItem("tyk_user") || sessionStorage.getItem("tyk_user");
         if (savedUser) {

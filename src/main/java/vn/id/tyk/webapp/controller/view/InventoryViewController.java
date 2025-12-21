@@ -1,16 +1,13 @@
 package vn.id.tyk.webapp.controller.view;
 
 import java.security.Principal;
-
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-
 import jakarta.servlet.http.HttpSession;
 import vn.id.tyk.webapp.entity.User;
 import vn.id.tyk.webapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-
 
 @Controller
 public class InventoryViewController {
@@ -23,11 +20,13 @@ public class InventoryViewController {
         User currentUser = userService.getAuthenticatedUser(session, principal);
 
         if (currentUser == null) {
-            return "redirect:/login";
+            if (session != null) {
+                session.invalidate();
+            }
+        
+            return "redirect:/?message=expired";
         }
-
         model.addAttribute("user", currentUser);
-
         return "inventory"; 
     }
 }
