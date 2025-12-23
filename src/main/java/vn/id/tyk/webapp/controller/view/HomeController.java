@@ -46,4 +46,9 @@ public class HomeController {
         model.addAttribute("newItems", marketRepository.findTop10ByStatusOrderByListedAtDesc("ACTIVE"));
         return "market";
     }
+
+    @GetMapping("/bid")
+    public String showBidBrowse() {
+        return "bid";
+    }
 }

@@ -105,17 +105,20 @@ async function loadCommunityDesigns() {
 
             html += `
             <div class="col-md-3 col-sm-6 mb-4">
-                <div class="card h-100 bg-dark border-secondary text-white shadow-sm hover-effect position-relative">
-                    ${adminAction} 
-                    <div style="height: 200px; overflow: hidden;">
+                <div class="card h-100 bg-dark border-secondary text-white shadow-sm position-relative overflow-hidden">
+                    ${adminAction}
+                    
+                    <div style="height: 200px; overflow: hidden; border-bottom: 1px solid #444;">
                         <img src="${d.imageUrl}" class="w-100 h-100" style="object-fit: cover;" onerror="this.src='/img/logo.png'">
                     </div>
+                    
                     <div class="card-body">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span class="badge bg-primary">${d.category}</span>
-                            <small class="text-muted">by ${d.creatorName || 'Unknow'}</small>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-primary text-uppercase" style="font-size: 0.7rem;">${d.category}</span>
+                            <small class="text-secondary"><i class="bi bi-person-circle"></i> ${d.creatorName || 'Unknown'}</small>
                         </div>
-                        <h6 class="card-title text-warning text-truncate">${d.title}</h6>
+                        <h5 class="card-title text-warning text-truncate fw-bold" title="${d.title}">${d.title}</h5>
+                        <p class="card-text small text-light text-truncate">${d.description || 'No description'}</p>
                     </div>
                 </div>
             </div>`;

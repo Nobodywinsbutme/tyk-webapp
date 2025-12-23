@@ -47,14 +47,12 @@ function renderNewsList(container, newsList) {
         return;
     }
 
-    // Lấy user từ localStorage giống hệt design.js
     const savedUser = localStorage.getItem("tyk_user") || sessionStorage.getItem("tyk_user");
     const currentUser = savedUser ? JSON.parse(savedUser) : null;
     const isAdmin = currentUser && currentUser.role === 'ADMIN';
 
     let html = '';
     newsList.forEach(n => {
-        // Xử lý ký tự đặc biệt để tránh lỗi khi truyền vào hàm onclick
         const safeTitle = n.title.replace(/'/g, "\\'");
         const safeDesc = n.description ? n.description.replace(/'/g, "\\'").replace(/\n/g, " ") : "";
 
@@ -73,12 +71,16 @@ function renderNewsList(container, newsList) {
         }
 
         html += `
-        <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card h-100 bg-dark border-secondary text-white shadow-sm">
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 bg-dark text-white border-secondary shadow-sm">
                 <div class="card-body d-flex flex-column">
-                    <h5 class="card-title text-warning">${n.title}</h5>
-                    <h6 class="card-subtitle mb-2 text-muted small">${n.createdDate || 'Just now'}</h6>
-                    <p class="card-text flex-grow-1" style="white-space: pre-line;">${n.description}</p>
+                    <h5 class="card-title text-warning fw-bold text-truncate">${n.title}</h5>
+                    <h6 class="card-subtitle mb-3 text-secondary small">
+                        <i class="bi bi-clock me-1"></i> ${n.createdDate || 'Just now'}
+                    </h6>
+                    <p class="card-text flex-grow-1 text-light" style="white-space: pre-line; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
+                        ${n.description}
+                    </p>
                     ${adminButtons}
                 </div>
             </div>
