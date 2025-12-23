@@ -10,6 +10,8 @@ function checkLoginState() {
     const authButtons = document.getElementById('authButtons'); // Nút Login/Signup
     const userProfile = document.getElementById('userProfile'); // Avatar User
     const inventoryBtn = document.getElementById('btnInventoryNav'); // Nút Inventory to trên Marketplace
+    const btnGuest = document.getElementById('btnGuestDownload');
+    const btnUser = document.getElementById('btnUserDownload');
 
     if (savedUser) {
         const user = JSON.parse(savedUser);
@@ -17,6 +19,8 @@ function checkLoginState() {
         if (authButtons) authButtons.classList.add('d-none');
         if (userProfile) userProfile.classList.remove('d-none');
         if (inventoryBtn) inventoryBtn.classList.remove('d-none');
+        if (btnGuest) btnGuest.classList.add('d-none');       // Ẩn nút Guest
+        if (btnUser) btnUser.classList.remove('d-none');
         
         if (userProfile) {
             let menuItems = '';
@@ -61,6 +65,8 @@ function checkLoginState() {
         if (authButtons) authButtons.classList.remove('d-none');
         if (userProfile) userProfile.classList.add('d-none');
         if (inventoryBtn) inventoryBtn.classList.add('d-none'); // Ẩn nút Inventory to
+        if (btnGuest) btnGuest.classList.remove('d-none');
+        if (btnUser) btnUser.classList.add('d-none');
     }
 }
 
